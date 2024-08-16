@@ -2,7 +2,7 @@ from flask_sqlalchemy import SQLAlchemy
 from . import db
 
 class Workouts(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True) # creates a unique id for each workout upon each new entry
     title = db.Column(db.String(100), nullable=False)
     exercises = db.relationship('Exercise', backref='workouts', lazy=True)
 
@@ -19,7 +19,7 @@ class Exercise(db.Model):
     sets = db.Column(db.Integer, nullable=False)
     reps = db.Column(db.Integer, nullable=False)
     rest = db.Column(db.Integer, nullable=False)
-    workouts_id = db.Column(db.Integer, db.ForeignKey('workouts.id'), nullable=False)
+    workouts_id = db.Column(db.Integer, db.ForeignKey('workouts.id'), nullable=False) # associates the exercise with a specific workout 
 
     def to_dict(self):
         return {

@@ -392,6 +392,23 @@
 										},
 										{
 											"_type": "UMLOperationView",
+											"_id": "AAAAAAGRVAzlHSfopXA=",
+											"_parent": {
+												"$ref": "AAAAAAGRTi1pCbCUUhw="
+											},
+											"model": {
+												"$ref": "AAAAAAGRVAzlDiflRnA="
+											},
+											"font": "Arial;13;0",
+											"left": 45,
+											"top": 282,
+											"width": 175,
+											"height": 13,
+											"text": "+resumeTimer()",
+											"horizontalAlignment": 0
+										},
+										{
+											"_type": "UMLOperationView",
 											"_id": "AAAAAAGRTmY+et8Tv8Q=",
 											"_parent": {
 												"$ref": "AAAAAAGRTi1pCbCUUhw="
@@ -401,7 +418,7 @@
 											},
 											"font": "Arial;13;0",
 											"left": 45,
-											"top": 282,
+											"top": 297,
 											"width": 175,
 											"height": 13,
 											"text": "+openExerciseModal()",
@@ -418,7 +435,7 @@
 											},
 											"font": "Arial;13;0",
 											"left": 45,
-											"top": 297,
+											"top": 312,
 											"width": 175,
 											"height": 13,
 											"text": "+closeExerciseModal()",
@@ -435,7 +452,7 @@
 											},
 											"font": "Arial;13;0",
 											"left": 45,
-											"top": 312,
+											"top": 327,
 											"width": 175,
 											"height": 13,
 											"text": "+openWorkoutModal()",
@@ -452,7 +469,7 @@
 											},
 											"font": "Arial;13;0",
 											"left": 45,
-											"top": 327,
+											"top": 342,
 											"width": 175,
 											"height": 13,
 											"text": "+closeWorkoutModal()",
@@ -469,7 +486,7 @@
 											},
 											"font": "Arial;13;0",
 											"left": 45,
-											"top": 342,
+											"top": 357,
 											"width": 175,
 											"height": 13,
 											"text": "+loadWorkout()",
@@ -486,7 +503,7 @@
 											},
 											"font": "Arial;13;0",
 											"left": 45,
-											"top": 357,
+											"top": 372,
 											"width": 175,
 											"height": 13,
 											"text": "+addWorkout()",
@@ -503,7 +520,7 @@
 											},
 											"font": "Arial;13;0",
 											"left": 45,
-											"top": 372,
+											"top": 387,
 											"width": 175,
 											"height": 13,
 											"text": "+deleteWorkout()",
@@ -520,7 +537,7 @@
 											},
 											"font": "Arial;13;0",
 											"left": 45,
-											"top": 387,
+											"top": 402,
 											"width": 175,
 											"height": 13,
 											"text": "+editWorkout()",
@@ -537,7 +554,7 @@
 											},
 											"font": "Arial;13;0",
 											"left": 45,
-											"top": 402,
+											"top": 417,
 											"width": 175,
 											"height": 13,
 											"text": "+addExercise()",
@@ -554,7 +571,7 @@
 											},
 											"font": "Arial;13;0",
 											"left": 45,
-											"top": 417,
+											"top": 432,
 											"width": 175,
 											"height": 13,
 											"text": "+deleteExercise()",
@@ -571,7 +588,7 @@
 											},
 											"font": "Arial;13;0",
 											"left": 45,
-											"top": 432,
+											"top": 447,
 											"width": 175,
 											"height": 13,
 											"text": "+editExercise()",
@@ -582,7 +599,7 @@
 									"left": 40,
 									"top": 232,
 									"width": 185,
-									"height": 218
+									"height": 233
 								},
 								{
 									"_type": "UMLReceptionCompartmentView",
@@ -622,7 +639,7 @@
 							"left": 40,
 							"top": 64,
 							"width": 184,
-							"height": 386,
+							"height": 401,
 							"nameCompartment": {
 								"$ref": "AAAAAAGRTi1pCbCOoZ4="
 							},
@@ -1573,7 +1590,7 @@
 											"top": 375,
 											"width": 151,
 											"height": 13,
-											"text": "WorkoutJournal"
+											"text": "WorkoutLog"
 										},
 										{
 											"_type": "LabelView",
@@ -1722,7 +1739,8 @@
 							"_parent": {
 								"$ref": "AAAAAAGRTi1pCLCLPso="
 							},
-							"name": "exerciseModalIsOpen"
+							"name": "exerciseModalIsOpen",
+							"type": ""
 						},
 						{
 							"_type": "UMLAttribute",
@@ -1739,7 +1757,8 @@
 							"_parent": {
 								"$ref": "AAAAAAGRTi1pCLCLPso="
 							},
-							"name": "workoutModalIsOpen"
+							"name": "workoutModalIsOpen",
+							"type": ""
 						},
 						{
 							"_type": "UMLAttribute",
@@ -1747,7 +1766,8 @@
 							"_parent": {
 								"$ref": "AAAAAAGRTi1pCLCLPso="
 							},
-							"name": "workouts"
+							"name": "workouts",
+							"type": ""
 						},
 						{
 							"_type": "UMLAttribute",
@@ -1755,7 +1775,8 @@
 							"_parent": {
 								"$ref": "AAAAAAGRTi1pCLCLPso="
 							},
-							"name": "selectedWorkout"
+							"name": "selectedWorkout",
+							"type": ""
 						},
 						{
 							"_type": "UMLAttribute",
@@ -1763,7 +1784,8 @@
 							"_parent": {
 								"$ref": "AAAAAAGRTi1pCLCLPso="
 							},
-							"name": "exercises"
+							"name": "exercises",
+							"type": ""
 						},
 						{
 							"_type": "UMLAttribute",
@@ -1771,7 +1793,8 @@
 							"_parent": {
 								"$ref": "AAAAAAGRTi1pCLCLPso="
 							},
-							"name": "editingIndex"
+							"name": "editingIndex",
+							"type": ""
 						},
 						{
 							"_type": "UMLAttribute",
@@ -1779,7 +1802,8 @@
 							"_parent": {
 								"$ref": "AAAAAAGRTi1pCLCLPso="
 							},
-							"name": "timer"
+							"name": "timer",
+							"type": ""
 						},
 						{
 							"_type": "UMLAttribute",
@@ -1787,7 +1811,8 @@
 							"_parent": {
 								"$ref": "AAAAAAGRTi1pCLCLPso="
 							},
-							"name": "timerRunning"
+							"name": "timerRunning",
+							"type": ""
 						}
 					],
 					"operations": [
@@ -1814,6 +1839,14 @@
 								"$ref": "AAAAAAGRTi1pCLCLPso="
 							},
 							"name": "resetTimer"
+						},
+						{
+							"_type": "UMLOperation",
+							"_id": "AAAAAAGRVAzlDiflRnA=",
+							"_parent": {
+								"$ref": "AAAAAAGRTi1pCLCLPso="
+							},
+							"name": "resumeTimer"
 						},
 						{
 							"_type": "UMLOperation",
@@ -2021,7 +2054,7 @@
 					"_parent": {
 						"$ref": "AAAAAAGRThgUx1GL0ns="
 					},
-					"name": "WorkoutJournal"
+					"name": "WorkoutLog"
 				}
 			]
 		},
@@ -2058,9 +2091,9 @@
 										"$ref": "AAAAAAGRTh3+RFaw3VM="
 									},
 									"font": "Arial;13;0",
-									"left": 48.6181640625,
+									"left": 44.27001953125,
 									"top": 13,
-									"width": 135.83349609375,
+									"width": 122.3828125,
 									"height": 13,
 									"text": "Backend ClassDiagram"
 								},
@@ -2073,7 +2106,7 @@
 									"font": "Arial;13;1",
 									"left": 13,
 									"top": 13,
-									"width": 29.6181640625,
+									"width": 25.27001953125,
 									"height": 13,
 									"text": "class"
 								}
