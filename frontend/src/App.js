@@ -1,16 +1,15 @@
 import React, { useEffect, useState} from 'react';
 import Modal from 'react-modal';
 //import axios from 'axios';
-import { Container, Header, Input, Button, Sheet, MessageItem } from './components/styles/styles';
+import { Container, Header, Input, Button, Sheet, AddEditWorkout, MessageItem } from './components/styles/styles';
 
 const App = () => {
-  const [exerciseModalIsOpen, setExerciseModalIsOpen] = useState(false);
-  const [workoutName, setWorkoutName] = useState('');
   const [workoutModalIsOpen, setWorkoutModalIsOpen] = useState(false);
+  const [workoutName, setWorkoutName] = useState('');
   const [workouts, setWorkouts] = useState([]);
-  const [selectedWorkout, setSelectedWorkout] = useState(null);
+  const [selectedWorkout, setSelectedWorkout] = useState({title: '', exercises: []});
   const [editWorkout, setEditWorkout] = useState(false);
-  const [exercises, setExercises] = useState({name: '', sets: '', reps: '', rest: ''});
+  const [exercises, setExercises] = useState([{name: '', sets: '', reps: '', rest: ''}]);
   const [editingIndex, setEditingIndex] = useState(null);
   const [timer, setTimer] = useState(0);
   const [timerRunning, setTimerRunning] = useState(false);
@@ -46,6 +45,11 @@ const App = () => {
     setTimerRunning(true);
   }
 
+  // Modal functions
+  const openCloseWorkoutModal = (change) => {
+    setWorkoutModalIsOpen(change); // true open, false close
+  }
+
   const pauseTimer = () => {
     setTimerRunning(false);
   } 
@@ -57,19 +61,6 @@ const App = () => {
 
   const resumeTimer = () => {
     setTimerRunning(true);
-  }
-
-  // Modal functions
-  const openExerciseModal = () => {
-    setExerciseModalIsOpen(true);
-  };
-
-  const closeExerciseModal = () => {
-    setExerciseModalIsOpen(false);
-  }
-
-  const closeWorkoutsModal = () => {
-    setWorkoutModalIsOpen(false);
   }
 
   // CRUD functions
@@ -85,7 +76,7 @@ const App = () => {
 
 
   const addWorkout = async () => {
-    const workoutsData = { title: workoutName , exercises: [] }; // we send an empty array of exercises to add to the workouts later
+    const workoutsData = { title: workoutName , exercises: exercises }; // we send an empty array of exercises to add to the workouts later
     const response = await fetch('/api/workouts', {
       method: 'POST',
       headers: {
@@ -99,6 +90,22 @@ const App = () => {
     setWorkoutName('');
     setWorkoutModalIsOpen(false); // close the modal
   };
+
+  const handleAddWorkout = () => {
+    setWorkoutModalIsOpen(true);
+    setEditWorkout(false);
+  }
+
+  const handleEditWorkout = async () => {
+    setWorkoutModalIsOpen(true);
+    setEditWorkout(true);
+    
+    console.log('selectedWorkout', selectedWorkout);
+    const response = await fetch(`/api/workouts/${selectedWorkout.id}/exercises`);
+    const data = await response.json();
+
+    setExercises(data);
+  }
 
   const deleteWorkout = () => {}
 
@@ -116,6 +123,17 @@ const App = () => {
     setSelectedWorkout(data);
   }
 
+  const handleInput = (index, event) => {
+    const values = [...exercises];
+    values[index][event.target.name] = event.target.value;
+    setExercises(values);
+  };
+
+  const handleCancelEditWorkout = () => {
+    openCloseWorkoutModal(false);
+    setExercises([{name: '', sets: '', reps: '', rest: ''}]);
+  }
+
   const addExercise = async () => {
     const response = await fetch(`/api/workouts/${selectedWorkout.id}/exercises`, { // adding the exercises to the selected workout based on id
       method: 'POST',
@@ -126,15 +144,19 @@ const App = () => {
     });
     const data = await response.json();
     setSelectedWorkout(prev => ({ ...prev, exercises: [...prev.exercises, data] })); // adding the new exercise to the selected workout
-    setExerciseModalIsOpen(false);
+  };
+
+  const addExerciseRow = () => {
+    setExercises([...exercises, { name: "", sets: "", reps: "", rest: "" }]);
+  };
+
+  const removeExerciseRow = (index) => {
+    const values = [...exercises];
+    values.splice(index, 1);
+    setExercises(values);
   };
 
   const deleteExercise = () => {}
-
-  const editExercise = (index) => {
-    setEditingIndex(index); // should set the index of the exercise we want to edit
-    setExerciseModalIsOpen(true);
-  }
 
   const logWorkout = () => {}
 
@@ -148,29 +170,24 @@ const App = () => {
       </Header>
       <Sheet>
         {/* as soon as we click on a workout we retrieve the available workouts/exercises from our backend */}
-        <select onChange={e => loadWorkout(e.target.value)}> 
+        <AddEditWorkout>
+         <select onChange={e => loadWorkout(e.target.value)}> 
           <option>Select a workout</option>
           {workouts.map((workouts, index) => (
             <option key={index} value={workouts.id}>{workouts.title}</option>
           ))}
         </select>
-        <Button onClick={() => {
-          setEditWorkout(false)
-          setWorkoutModalIsOpen(true)
-          }}>Add Workout</Button>
-        <Button onClick={() => {
-          setEditWorkout(true)
-          setWorkoutModalIsOpen(true)
-        }}>Edit Workout</Button>
+        <Button onClick={handleAddWorkout}>Add Workout</Button>
+        <Button onClick={handleEditWorkout}>Edit Workout</Button>
+        </AddEditWorkout>
         {selectedWorkout ? (
-          <>
-            <Button onClick={openExerciseModal}>Add Exercise</Button>
+        <>
+            {/* <Button onClick={() => setExerciseModalIsOpen(true)}>Add Exercise</Button> */}
             <Header>{selectedWorkout.title}</Header>
             <table>
               <thead>
                 <tr>
-                <th></th>
-                  <th>Exercise  </th>
+                  <th>Exercise</th>
                   <th>Sets  </th>
                   <th>Reps  </th>
                   <th>Rest  </th>
@@ -181,9 +198,6 @@ const App = () => {
               <tbody>
                 {selectedWorkout && selectedWorkout.exercises.map((exercise, index) => ( 
                 <tr key={index}>
-                  <td>
-                      <button onClick={() => editExercise(index)}>Edit</button>
-                  </td>
                   <td>{exercise.name}</td>
                   <td>{exercise.sets}</td>
                   <td>{exercise.reps}</td>
@@ -206,49 +220,72 @@ const App = () => {
         )}
       </Sheet>
 
-      <Modal isOpen={workoutModalIsOpen} onRequestClose={closeWorkoutsModal}>
-              <h2>{editWorkout ? 'Edit Workout' : 'Add Workout'}</h2>
-              <form onSubmit={editWorkout ? updateWorkout : addWorkout}>
-              <input
-                type="text"
-                value={workoutName}
-                onChange={e => setWorkoutName(e.target.value)}
-                placeholder='Enter new workout name'
-                required
-              />
-              <button type="submit">{editWorkout ? 'Edit Workout' : 'Add Workout'}</button>
-            </form>
-      </Modal>
+      <Modal isOpen={workoutModalIsOpen}>
+              <h2>{editWorkout ? `Edit Workout: ${selectedWorkout.title}` : 'Add Workout'}</h2>
+              <form onSubmit={(e) => {
+                e.preventDefault(); 
+                editWorkout ? updateWorkout({title: workoutName}) : addWorkout();
+                }}>
+                <input
+                  type="text"
+                  value={workoutName}
+                  onChange={e => setWorkoutName(e.target.value)}
+                  placeholder='Enter new workout name'
+                  required
+                />
+                <><p>Exercises: </p></>
 
-      <Modal isOpen={exerciseModalIsOpen} onRequestClose={addExercise}>
-                <form onSubmit={addExercise}>
+                {exercises.map((exercise, index) => (
+                  console.log(exercises),
+                <div key={index}>
                   <input
                     type="text"
-                    value={exercises.name}
-                    onChange={(e) => setExercises(prev => ({ ...prev, name: e.target.value }))}
+                    name="name"
+                    value={exercise.name}
+                    onChange={(event) => handleInput(index, event)}
                     placeholder="Exercise"
                   />
                   <input
                     type="number"
-                    value={exercises.sets}
-                    onChange={(e) => setExercises(prev => ({ ...prev, sets: e.target.value }))}
+                    name="name"
+                    value={exercise.sets}
+                    onChange={(event) => handleInput(index, event)}
                     placeholder="Sets"
                   />
                   <input
                     type="number"
-                    value={exercises.reps}
-                    onChange={(e) => setExercises(prev => ({ ...prev, reps: e.target.value }))}
+                    name="name"
+                    value={exercise.reps}
+                    onChange={(event) => handleInput(index, event)}
                     placeholder="Reps"
                   />
                   <input
                     type="number"
-                    value={exercises.rest}
-                    onChange={(e) => setExercises(prev => ({ ...prev, rest: e.target.value }))}
+                    name="name"
+                    value={exercise.rest}
+                    onChange={(event) => handleInput(index, event)}
                     placeholder="Rest"
                   />
-                  <button type="Submit">Submit</button>
-                  <button type="Submit" onClick={closeExerciseModal}>Cancel</button>
-                  </form>
+                <button onClick={addExerciseRow}>+</button>
+                <button onClick={removeExerciseRow}>-</button>
+                </div>
+                ))}
+
+                <div>
+                  <> </>
+                  <Button type="submit" onClick={() => {
+                    if (editWorkout) {
+                      // updateWorkout({title: workoutName});
+                      console.log('updateWorkout');
+                    } else {
+                      // addWorkout();
+                      console.log('updateWorkout');
+                    }
+                  }}>{editWorkout ? 'Update' : 'Add Workout'}</Button>
+                  {editWorkout ? <Button type="submit" onClick={() => {}}>Delete</Button> : null}
+                  <Button type="Submit" onClick={handleCancelEditWorkout}>Cancel</Button>
+                </div>
+            </form>
       </Modal>
 
     </Container>

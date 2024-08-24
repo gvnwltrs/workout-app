@@ -26,6 +26,8 @@ export const Button = styled.button`
   cursor: pointer;
   font-size: 16px;
   margin-top: 20px;
+  margin-left: 10px;
+  margin-right: 10px;
 
   &:hover {
     background-color: #21a1f1;
@@ -52,6 +54,28 @@ export const Sheet = styled.div`
   font-size: calc(10px + 2vmin);
   color: white;
   margin-top: 20px;
+`;
+
+export const AddEditWorkout = styled.div`
+  display: flex;
+  flex-direction: row;
+  background-color: #f1f1f1;
+  color: black;
+  padding: 10px;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 5px;
+`;
+
+export const AddExercise = styled.div`
+  display: flex;
+  flex-direction: row;
+  background-color: #f1f1f1;
+  color: black;
+  padding: 10px;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 5px;
 `;
 
 export const MessageItem = styled.div`

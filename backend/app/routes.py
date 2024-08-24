@@ -29,6 +29,12 @@ def update_workouts(id):
     db.session.commit()
     return jsonify(workouts.to_dict())
 
+@main.route('/api/workouts/<int:id>/exercises', methods=['GET'])
+def get_exercises(id):
+    workout = Workouts.query.get_or_404(id)
+    exercises = Exercise.query.filter_by(workouts_id=workout.id).all()
+    return jsonify([exercise.to_dict() for exercise in exercises])
+
 @main.route('/api/workouts/<int:workouts_id>/exercises', methods=['POST'])
 def add_exercise(workouts_id):
     data = request.get_json()
