@@ -69,13 +69,17 @@ const App = () => {
     const workoutsData = await workoutsResponse.json(); // using another await to make sure we process the whole response
     setSelectedWorkout(workoutsData);
 
-    const exerciseResponse = await fetch(`/api/workouts/${workoutsId}/exercises`);
-    const exercises = await exerciseResponse.json();
-    setExercises(exercises);
+    const exercisesResponse = await fetch(`/api/exercises/${workoutsId}`);
+    const exercisesData = await exercisesResponse.json();
+    setExercises(exercisesData);
   };
 
 
   const addWorkout = async () => {
+    if (workouts.some(workout => workout.title === workoutName)) {
+      alert('Workout already exists');
+      return;
+    }
     const workoutsData = { title: workoutName , exercises: exercises }; // we send an empty array of exercises to add to the workouts later
     const response = await fetch('/api/workouts', {
       method: 'POST',
@@ -94,14 +98,16 @@ const App = () => {
   const handleAddWorkout = () => {
     setWorkoutModalIsOpen(true);
     setEditWorkout(false);
+    setExercises([{name: '', sets: '', reps: '', rest: ''}]);
   }
 
   const handleEditWorkout = async () => {
     setWorkoutModalIsOpen(true);
     setEditWorkout(true);
+    setWorkoutName(selectedWorkout.title);
     
-    console.log('selectedWorkout', selectedWorkout);
-    const response = await fetch(`/api/workouts/${selectedWorkout.id}/exercises`);
+    console.log('selectedWorkout: ', selectedWorkout);
+    const response = await fetch(`/api/exercises/${selectedWorkout.id}`);
     const data = await response.json();
 
     setExercises(data);
@@ -111,16 +117,52 @@ const App = () => {
 
   const updateWorkout = async (newWorkoutsData) => { // newWorkoutsData is the new data we want to update coming from the form
     console.log('newWorkoutsData', newWorkoutsData);
-    const response = await fetch(`/api/workouts/${selectedWorkout.id}`, { 
+    let response = await fetch(`/api/workouts/${selectedWorkout.id}`, { 
       method: 'PUT', // use PUT to update the data instead of POST
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(newWorkoutsData),
     });
-    const data = await response.json(); // check if the response is ok
-    setWorkouts(prev => prev.map(workouts => workouts.id === data.id ? data : workouts)); // should update the workouts array with the new workout name 
-    setSelectedWorkout(data);
+    let data = await response.json(); // check if the response is ok
+    setSelectedWorkout(data); // set the new workout as the selected workout
+
+    // Update the exercises
+    const updatedExercises = [];
+    for (const exercise of exercises) {
+      if (exercise.id) {
+        const response = await fetch(`/api/exercises/${exercise.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(exercise),
+        });
+        const updatedExercise = await response.json();
+        updatedExercises.push(updatedExercise);
+    } else {
+        const response = await fetch(`/api/exercises/${selectedWorkout.id}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(exercise),
+        });
+        const newExercise = await response.json();
+        updatedExercises.push(newExercise);
+      }
+    }
+
+    // Fetch the updated workout
+    response = await fetch(`/api/exercises/${selectedWorkout.id}`);
+    data = await response.json();
+
+    if (Array.isArray(workouts)) {
+      setWorkouts(prev => prev.map(workouts => workouts.id === data.id ? data : workouts)); // should update the workouts array with the new workout name 
+    }
+
+    setSelectedWorkout(prev => ({ ...prev, exercises: updatedExercises })); // update the selected workout with the new exercises
+    setWorkoutModalIsOpen(false);
   }
 
   const handleInput = (index, event) => {
@@ -134,29 +176,31 @@ const App = () => {
     setExercises([{name: '', sets: '', reps: '', rest: ''}]);
   }
 
-  const addExercise = async () => {
-    const response = await fetch(`/api/workouts/${selectedWorkout.id}/exercises`, { // adding the exercises to the selected workout based on id
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(exercises),
-    });
-    const data = await response.json();
-    setSelectedWorkout(prev => ({ ...prev, exercises: [...prev.exercises, data] })); // adding the new exercise to the selected workout
-  };
-
-  const addExerciseRow = () => {
+  const addExercise = () => {
     setExercises([...exercises, { name: "", sets: "", reps: "", rest: "" }]);
   };
 
-  const removeExerciseRow = (index) => {
-    const values = [...exercises];
-    values.splice(index, 1);
-    setExercises(values);
-  };
+  const removeExercise = async (index) => {
+    const newExercises = [...exercises];
+    const removedExercise = newExercises.splice(index, 1)[0];
 
-  const deleteExercise = () => {}
+    if (newExercises.length === 0) {
+      newExercises.push({ name: "", sets: "", reps: "", rest: "" });
+    }
+
+    if (removedExercise.id && selectedWorkout.exercises.find(exercise => exercise.id === removedExercise.id)) {
+      await fetch(`/api/exercises/${removedExercise.id}`, {
+        method: 'DELETE',
+      });
+    
+      setSelectedWorkout(prev => ({
+        ...prev,
+        exercises: prev.exercises.filter(exercise => exercise.id !== removedExercise.id),
+      }));
+    }
+
+    setExercises(newExercises);
+  };
 
   const logWorkout = () => {}
 
@@ -224,11 +268,12 @@ const App = () => {
               <h2>{editWorkout ? `Edit Workout: ${selectedWorkout.title}` : 'Add Workout'}</h2>
               <form onSubmit={(e) => {
                 e.preventDefault(); 
-                editWorkout ? updateWorkout({title: workoutName}) : addWorkout();
+                editWorkout ? updateWorkout({id: selectedWorkout.id, title: workoutName, exercises: exercises}) : addWorkout();
                 }}>
                 <input
                   type="text"
-                  value={workoutName}
+                  name="title"
+                  value={editWorkout ? workoutName : ""}
                   onChange={e => setWorkoutName(e.target.value)}
                   placeholder='Enter new workout name'
                   required
@@ -236,7 +281,6 @@ const App = () => {
                 <><p>Exercises: </p></>
 
                 {exercises.map((exercise, index) => (
-                  console.log(exercises),
                 <div key={index}>
                   <input
                     type="text"
@@ -247,43 +291,35 @@ const App = () => {
                   />
                   <input
                     type="number"
-                    name="name"
+                    name="sets"
                     value={exercise.sets}
                     onChange={(event) => handleInput(index, event)}
                     placeholder="Sets"
                   />
                   <input
                     type="number"
-                    name="name"
+                    name="reps"
                     value={exercise.reps}
                     onChange={(event) => handleInput(index, event)}
                     placeholder="Reps"
                   />
                   <input
                     type="number"
-                    name="name"
+                    name="rest"
                     value={exercise.rest}
                     onChange={(event) => handleInput(index, event)}
                     placeholder="Rest"
                   />
-                <button onClick={addExerciseRow}>+</button>
-                <button onClick={removeExerciseRow}>-</button>
+                <button type="button" onClick={addExercise}>+</button>
+                <button type="button" onClick={() => removeExercise(index)}>-</button>
                 </div>
                 ))}
 
                 <div>
                   <> </>
-                  <Button type="submit" onClick={() => {
-                    if (editWorkout) {
-                      // updateWorkout({title: workoutName});
-                      console.log('updateWorkout');
-                    } else {
-                      // addWorkout();
-                      console.log('updateWorkout');
-                    }
-                  }}>{editWorkout ? 'Update' : 'Add Workout'}</Button>
+                  <Button type="submit">{editWorkout ? 'Update' : 'Add Workout'}</Button>
                   {editWorkout ? <Button type="submit" onClick={() => {}}>Delete</Button> : null}
-                  <Button type="Submit" onClick={handleCancelEditWorkout}>Cancel</Button>
+                  <Button type="button" onClick={handleCancelEditWorkout}>Cancel</Button>
                 </div>
             </form>
       </Modal>

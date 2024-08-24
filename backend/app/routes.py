@@ -29,16 +29,41 @@ def update_workouts(id):
     db.session.commit()
     return jsonify(workouts.to_dict())
 
-@main.route('/api/workouts/<int:id>/exercises', methods=['GET'])
+@main.route('/api/workouts/<int:id>', methods=['DELETE'])
+def delete_workout(id):
+    workout = Workouts.query.get_or_404(id)  # get the workout with the specified id or return a 404 error
+    db.session.delete(workout)
+    db.session.commit()
+    return jsonify({'message': 'Workout deleted successfully'}), 200
+
+@main.route('/api/exercises/<int:id>', methods=['GET'])
 def get_exercises(id):
     workout = Workouts.query.get_or_404(id)
     exercises = Exercise.query.filter_by(workouts_id=workout.id).all()
     return jsonify([exercise.to_dict() for exercise in exercises])
 
-@main.route('/api/workouts/<int:workouts_id>/exercises', methods=['POST'])
+@main.route('/api/exercises/<int:workouts_id>', methods=['POST'])
 def add_exercise(workouts_id):
     data = request.get_json()
     exercise = Exercise(name=data['name'], sets=data['sets'], reps=data['reps'], rest=data['rest'], workouts_id=workouts_id)
     db.session.add(exercise)
     db.session.commit()
     return jsonify(exercise.to_dict()), 201
+
+@main.route('/api/exercises/<int:id>', methods=['PUT'])
+def update_exercise(id):
+    data = request.get_json()
+    exercise = Exercise.query.get_or_404(id) # get the exercise with the specified id or return a 404 error
+    exercise.name = data['name'] # get the name from the request data and update the exercise
+    exercise.sets = data['sets'] # get the description from the request data and update the exercise
+    exercise.reps = data['reps'] # get the description from the request data and update the exercise
+    exercise.rest = data['rest'] # get the description from the request data and update the exercise
+    db.session.commit()
+    return jsonify(exercise.to_dict())
+
+@main.route('/api/exercises/<int:id>', methods=['DELETE'])
+def delete_exercise(id):
+    exercise = Exercise.query.get_or_404(id)  # get the exercise with the specified id or return a 404 error
+    db.session.delete(exercise)
+    db.session.commit()
+    return jsonify({'message': 'Exercise deleted successfully'}), 200
