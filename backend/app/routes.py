@@ -43,7 +43,7 @@ def get_exercises(id):
     return jsonify([exercise.to_dict() for exercise in exercises])
 
 @main.route('/api/exercises/<int:workouts_id>', methods=['POST'])
-def add_exercise(workouts_id):
+def add_exercises(workouts_id):
     data = request.get_json()
     exercise = Exercise(name=data['name'], sets=data['sets'], reps=data['reps'], rest=data['rest'], workouts_id=workouts_id)
     db.session.add(exercise)
@@ -51,7 +51,7 @@ def add_exercise(workouts_id):
     return jsonify(exercise.to_dict()), 201
 
 @main.route('/api/exercises/<int:id>', methods=['PUT'])
-def update_exercise(id):
+def update_exercises(id):
     data = request.get_json()
     exercise = Exercise.query.get_or_404(id) # get the exercise with the specified id or return a 404 error
     exercise.name = data['name'] # get the name from the request data and update the exercise
@@ -62,7 +62,7 @@ def update_exercise(id):
     return jsonify(exercise.to_dict())
 
 @main.route('/api/exercises/<int:id>', methods=['DELETE'])
-def delete_exercise(id):
+def delete_exercises(id):
     exercise = Exercise.query.get_or_404(id)  # get the exercise with the specified id or return a 404 error
     db.session.delete(exercise)
     db.session.commit()

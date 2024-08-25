@@ -89,8 +89,23 @@ const App = () => {
       body: JSON.stringify(workoutsData),
     });
     const data = await response.json(); // checking to see if the response is ok
-    setWorkouts(prev => [...prev, data]); // add the new workouts to the workouts array
-    setSelectedWorkout(data); // set the new workout as the selected workout
+
+    // Send a POST request to the add exercises endpoint for each exercise
+    const newExercises = [];
+    for (const exercise of exercises) {
+      const exerciseResponse = await fetch(`/api/exercises/${data.id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(exercise), // Include the workoutId in the request body
+      });
+      const newExercisesData = await exerciseResponse.json();
+      newExercises.push(newExercisesData);
+    }
+
+    setSelectedWorkout({...data, exercises: newExercises}); // set the new workout as the selected workout
+    setWorkouts(prev => [...prev, {...data, exercises: newExercises}]); // add the new workouts to the workouts array
     setWorkoutName('');
     setWorkoutModalIsOpen(false); // close the modal
   };
@@ -113,7 +128,30 @@ const App = () => {
     setExercises(data);
   }
 
-  const deleteWorkout = () => {}
+  const deleteWorkout = async () => {
+    const confirmDelete = window.confirm('Are you sure you want to delete this workout?');
+    if (!confirmDelete) {
+      return;
+    }
+    await fetch(`/api/workouts/${selectedWorkout.id}`, {
+      method: 'DELETE',
+    });
+  
+    // Update the workouts state
+    const newWorkouts = workouts.filter(workout => workout.id !== selectedWorkout.id);
+    setWorkouts(newWorkouts);
+  
+    // Set the selectedWorkout state to the first workout in the workouts array
+    if (newWorkouts.length > 0) {
+      setSelectedWorkout(newWorkouts[0]);
+    } else {
+      setSelectedWorkout(null); // or set to an empty workout object if it makes more sense in your context
+    }
+  
+    // Close the modal
+    setWorkoutModalIsOpen(false);
+  };
+  
 
   const updateWorkout = async (newWorkoutsData) => { // newWorkoutsData is the new data we want to update coming from the form
     console.log('newWorkoutsData', newWorkoutsData);
@@ -126,6 +164,7 @@ const App = () => {
     });
     let data = await response.json(); // check if the response is ok
     setSelectedWorkout(data); // set the new workout as the selected workout
+    setWorkouts(prev => prev.map(workout => workout.id === data.id ? data : workout));
 
     // Update the exercises
     const updatedExercises = [];
@@ -273,7 +312,7 @@ const App = () => {
                 <input
                   type="text"
                   name="title"
-                  value={editWorkout ? workoutName : ""}
+                  value={editWorkout ? workoutName : null}
                   onChange={e => setWorkoutName(e.target.value)}
                   placeholder='Enter new workout name'
                   required
@@ -318,7 +357,7 @@ const App = () => {
                 <div>
                   <> </>
                   <Button type="submit">{editWorkout ? 'Update' : 'Add Workout'}</Button>
-                  {editWorkout ? <Button type="submit" onClick={() => {}}>Delete</Button> : null}
+                  {editWorkout ? <Button type="submit" onClick={deleteWorkout}>Delete</Button> : null}
                   <Button type="button" onClick={handleCancelEditWorkout}>Cancel</Button>
                 </div>
             </form>
