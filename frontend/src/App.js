@@ -13,6 +13,7 @@ const App = () => {
   const [editingIndex, setEditingIndex] = useState(null);
   const [timer, setTimer] = useState(0);
   const [timerRunning, setTimerRunning] = useState(false);
+  const [workoutLogs, setWorkoutLogs] = useState([]);
 
   // Initialize workouts for the app by fetching data from the backend
   useEffect(() => {
@@ -72,6 +73,10 @@ const App = () => {
     const exercisesResponse = await fetch(`/api/exercises/${workoutsId}`);
     const exercisesData = await exercisesResponse.json();
     setExercises(exercisesData);
+
+    const logsResponse = await fetch(`/api/logs/${workoutsId}`);
+    const logsData = await logsResponse.json();
+    setWorkoutLogs(logsData);
   };
 
 
