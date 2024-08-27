@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request
-from .models import db, Workouts, Exercise
+from .models import db, Workouts, Exercise, WorkoutLog
 
 main = Blueprint('main', __name__)
 
@@ -67,3 +67,92 @@ def delete_exercises(id):
     db.session.delete(exercise)
     db.session.commit()
     return jsonify({'message': 'Exercise deleted successfully'}), 200
+
+@main.route('/api/logs/<int:workout_id>/<int:exercise_id>', methods=['GET'])
+def get_workout_logs(workout_id, exercise_id):
+    # Get the workout and exercise with the specified ids or return a 404 error
+    workout = Workout.query.get_or_404(workout_id)
+    exercise = Exercise.query.get_or_404(exercise_id)
+
+    # Get the workout logs for the exercise
+    logs = WorkoutLog.query.filter_by(workouts_id=workout_id, exercise_id=exercise_id).all()
+
+    # Convert the logs to dictionaries and return them
+    return jsonify([log.to_dict() for log in logs])
+
+@main.route('/api/logs/<int:workout_id>/<int:exercise_id>', methods=['POST'])
+def add_workout_logs(workout_id, exercise_id):
+    # Get the workout and exercise with the specified ids or return a 404 error
+    workout = Workout.query.get_or_404(workout_id)
+    exercise = Exercise.query.get_or_404(exercise_id)
+
+    # Get the workout log from the request body
+    log_data = request.get_json()
+
+    # Create and add the workout log
+    log = WorkoutLog(workouts_id=workout_id, sets=log_data['sets'], reps=log_data['reps'], weight_lbs=log_data['weight_lbs'], notes=log_data['notes'], exercise_id=exercise_id)
+    db.session.add(log)
+    db.session.commit()
+
+    # Return the workout log
+    return jsonify(log.to_dict())
+
+@main.route('/api/logs/<int:workout_id>/<int:exercise_id>/<int:log_id>', methods=['PUT'])
+def update_workout_log(workout_id, exercise_id, log_id):
+    # Get the workout, exercise, and log with the specified ids or return a 404 error
+    workout = Workout.query.get_or_404(workout_id)
+    exercise = Exercise.query.get_or_404(exercise_id)
+    log = WorkoutLog.query.get_or_404(log_id)
+
+    # Ensure the log is for the specified workout and exercise
+    if log.workouts_id != workout_id or log.exercise_id != exercise_id:
+        abort(400)
+
+    # Get the updated log data from the request body
+    log_data = request.get_json()
+
+    # Update the log
+    log.sets = log_data['sets']
+    log.reps = log_data['reps']
+    log.weight_lbs = log_data['weight_lbs']
+    log.notes = log_data['notes']
+
+    db.session.commit()
+
+    # Return the updated log
+    return jsonify(log.to_dict())
+
+@main.route('/api/logs/<int:workout_id>/<int:exercise_id>/<int:log_id>', methods=['DELETE'])
+def delete_workout_log(workout_id, exercise_id, log_id):
+    # Get the workout, exercise, and log with the specified ids or return a 404 error
+    workout = Workout.query.get_or_404(workout_id)
+    exercise = Exercise.query.get_or_404(exercise_id)
+    log = WorkoutLog.query.get_or_404(log_id)
+
+    # Ensure the log is for the specified workout and exercise
+    if log.workouts_id != workout_id or log.exercise_id != exercise_id:
+        abort(400)
+
+    # Delete the log
+    db.session.delete(log)
+    db.session.commit()
+
+    # Return a success message
+    return jsonify({'message': 'Log deleted successfully'})
+
+@main.route('/api/workouts/<int:workout_id>/exercises/<int:exercise_id>/logs', methods=['DELETE'])
+def delete_workout_logs(workout_id, exercise_id):
+    # Get the workout and exercise with the specified ids or return a 404 error
+    workout = Workout.query.get_or_404(workout_id)
+    exercise = Exercise.query.get_or_404(exercise_id)
+
+    # Get the logs for the specified workout and exercise
+    logs = WorkoutLog.query.filter_by(workouts_id=workout_id, exercise_id=exercise_id).all()
+
+    # Delete the logs
+    for log in logs:
+        db.session.delete(log)
+    db.session.commit()
+
+    # Return a success message
+    return jsonify({'message': 'Logs deleted successfully'})

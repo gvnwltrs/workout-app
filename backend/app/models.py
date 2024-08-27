@@ -30,3 +30,24 @@ class Exercise(db.Model):
             'rest': self.rest,
             'workouts_id': self.workouts_id
         }
+
+class WorkoutLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    date= db.Column(db.Date, nullable=False)
+    sets = db.Column(db.Integer, nullable=False)
+    reps = db.Column(db.Integer, nullable=False)
+    weight_lbs = db.Column(db.Float, nullable=False)
+    notes = db.Column(db.String(500), nullable=True)
+    workouts_id = db.Column(db.Integer, db.ForeignKey('workouts.id'), nullable=False)
+    exercise_id = db.Column(db.Integer, db.ForeignKey('exercise.id'), nullable=False)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'workouts_id': self.workouts_id,
+            'sets': self.sets,
+            'reps': self.reps,
+            'weight_lbs': self.weight_lbs,
+            'notes': self.notes,
+            'exercise_id': self.exercise_id
+        }
