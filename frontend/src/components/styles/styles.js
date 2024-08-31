@@ -86,3 +86,9 @@ export const MessageItem = styled.div`
   border-radius: 5px;
   border: 1px solid #ccc;
 `;
+
+export const RestTimer = styled.div`
+  position: absolute;
+  top: 0;
+  right: 0;
+`;

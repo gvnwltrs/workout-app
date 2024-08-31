@@ -1,10 +1,16 @@
 import React, { useEffect, useState} from 'react';
 import Modal from 'react-modal';
 //import axios from 'axios';
-import { Container, Header, Input, Button, Sheet, AddEditWorkout, MessageItem } from './components/styles/styles';
+import { Container, Header, Input, Button, Sheet, AddEditWorkout, MessageItem, RestTimer } from './components/styles/styles';
 import { saveAs } from 'file-saver';
 
 const App = () => {
+  const today = new Date();
+  // const date = `${today.getFullYear()}-${today.getMonth()+1}-${today.getDate()}`;
+  const date = today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  // const time = today.toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', second: 'numeric' });
+
+  const [time, setTime] = useState(new Date().toLocaleTimeString());
   const [workoutModalIsOpen, setWorkoutModalIsOpen] = useState(false);
   const [workoutName, setWorkoutName] = useState('');
   const [workouts, setWorkouts] = useState([]);
@@ -15,8 +21,18 @@ const App = () => {
   const [timer, setTimer] = useState(0);
   const [timerRunning, setTimerRunning] = useState(false);
   const [workoutLogs, setWorkoutLogs] = useState([]);
+  const [exerciseLogs, setExerciseLogs] = useState({});
   const [currentLog, setCurrentLog] = useState(null);
   const [currentExercise, setCurrentExercise] = useState(null);
+  const [sets, setSets] = useState([{ reps: '', weight: '' }]);
+
+  // Clock
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTime(new Date().toLocaleTimeString());
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Initialize workouts for the app by fetching data from the backend
   useEffect(() => {
@@ -43,6 +59,19 @@ const App = () => {
     return () => clearInterval(interval);
   }, [timerRunning, timer]);
 
+  // Logs 
+  useEffect(() => {
+    if (currentExercise) {
+      setExerciseLogs(prevLogs => {
+        const logs = {...prevLogs};
+        if (!logs[currentExercise.id]) {
+          logs[currentExercise.id] = [{ reps: '', weight: '' }];
+        }
+        return logs;
+      });
+    }
+  }, [currentExercise]);
+
   // Timer functions
   const startTimer = (rest) => {
     setTimer(rest);
@@ -59,7 +88,7 @@ const App = () => {
   } 
 
   const resetTimer = () => {
-    setTimer(null);
+    setTimer(0);
     setTimerRunning(false);
   };
 
@@ -272,6 +301,25 @@ const App = () => {
     setCurrentExercise(null);
   };
 
+  const handleAddExerciseSetLog = (exerciseId) => {
+    setExerciseLogs(prevLogs => { 
+      const logs = {...prevLogs};
+      logs[exerciseId] = [...(logs[exerciseId] || []), { reps: '', weight: '' }];
+      return logs;
+    }); 
+  };
+
+  const handleRemoveExerciseSetLog = (exerciseId, index) => {
+    setExerciseLogs(prevLogs => {
+      const logs = {...prevLogs};
+      logs[exerciseId] = logs[exerciseId].filter((set, i) => i !== index);
+      if (logs[exerciseId].length === 0) {
+        logs[exerciseId] = [{ reps: '', weight: '' }];
+      }
+      return logs
+    });
+  };
+
   const exportWorkout = async () => {
     console.log('exporting workout...');
 
@@ -299,7 +347,10 @@ const App = () => {
   return (
     <Container>
       <Header>
-        <p>Simple Workout App</p>
+        <h1>Simple Workout App</h1>
+        <p>Date: {date}</p>
+        <p>Time: {time}</p>
+        <p>Rest Timer: {timer}</p>
       </Header>
       <Sheet>
         {/* as soon as we click on a workout we retrieve the available workouts/exercises from our backend */}
@@ -325,7 +376,6 @@ const App = () => {
                   <th>Sets  </th>
                   <th>Reps  </th>
                   <th>Rest  </th>
-                  <th>Timer  </th>
                   <th>Progress </th>
                 </tr>
               </thead>
@@ -337,7 +387,7 @@ const App = () => {
                   <td>{exercise.reps}</td>
                   <td>{exercise.rest}</td>
                   <td>
-                    {timer !== null ? timer : '0'}
+                    {/* {timer !== null ? timer : '0'} */}
                     <button onClick={() => startTimer(exercise.rest)}>Start</button>
                     <button onClick={pauseTimer}>Pause</button>
                     <button onClick={resumeTimer}>Resume</button>
@@ -419,21 +469,30 @@ const App = () => {
 
       <Modal isOpen={currentLog !== null}>
         <h2>Log {currentLog ? currentLog.name : ''}</h2>
+        <select> 
+          <option>Select Log Date</option>
+          <option>Today</option>
+          <option>Yesterday</option>
+        </select>
         <form onSubmit={handleLogSubmit}>
+          {currentLog && exerciseLogs[currentLog.id] && exerciseLogs[currentLog.id].map((set, index) => (
+            <div key={index}> 
           <label>
-            Sets:
-            <input type="number" name="sets" />
+            Set: {index + 1}
           </label>
+          <br />
           <label>
             Reps:
-            <input type="number" name="reps" />
+            <input type="number" name={`reps: ${index}`} />
           </label>
           <label>
             Weight:
-            <input type="number" name="weight" />
+            <input type="number" name={`weight: ${index}`} />
           </label>
-          <button type="button" onClick={() => console.log('added set')}>+</button>
-          <button type="button" onClick={() => console.log('added set')}>-</button>
+          <button type="button" onClick={() => handleAddExerciseSetLog(currentLog.id)}>+</button>
+          <button type="button" onClick={() => handleRemoveExerciseSetLog(currentLog.id, index)}>-</button>
+            </div>
+          ))}
         </form>
         <Button type="submit">Save Log</Button>
         <Button type="button" onClick={() => setCurrentLog(null)}>Cancel</Button>
