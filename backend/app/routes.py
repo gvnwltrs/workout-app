@@ -1,4 +1,6 @@
-from flask import Blueprint, jsonify, request
+import pandas as pd
+from flask import Blueprint, jsonify, request, send_file, Response
+from io import StringIO, BytesIO
 from .models import db, Workouts, Exercise, WorkoutLog
 
 main = Blueprint('main', __name__)
@@ -71,7 +73,7 @@ def delete_exercises(id):
 @main.route('/api/logs/<int:workout_id>/<int:exercise_id>', methods=['GET'])
 def get_workout_logs(workout_id, exercise_id):
     # Get the workout and exercise with the specified ids or return a 404 error
-    workout = Workout.query.get_or_404(workout_id)
+    workout = Workouts.query.get_or_404(workout_id)
     exercise = Exercise.query.get_or_404(exercise_id)
 
     # Get the workout logs for the exercise
@@ -83,7 +85,7 @@ def get_workout_logs(workout_id, exercise_id):
 @main.route('/api/logs/<int:workout_id>/<int:exercise_id>', methods=['POST'])
 def add_workout_logs(workout_id, exercise_id):
     # Get the workout and exercise with the specified ids or return a 404 error
-    workout = Workout.query.get_or_404(workout_id)
+    workout = Workouts.query.get_or_404(workout_id)
     exercise = Exercise.query.get_or_404(exercise_id)
 
     # Get the workout log from the request body
@@ -100,7 +102,7 @@ def add_workout_logs(workout_id, exercise_id):
 @main.route('/api/logs/<int:workout_id>/<int:exercise_id>/<int:log_id>', methods=['PUT'])
 def update_workout_log(workout_id, exercise_id, log_id):
     # Get the workout, exercise, and log with the specified ids or return a 404 error
-    workout = Workout.query.get_or_404(workout_id)
+    workout = Workouts.query.get_or_404(workout_id)
     exercise = Exercise.query.get_or_404(exercise_id)
     log = WorkoutLog.query.get_or_404(log_id)
 
@@ -125,7 +127,7 @@ def update_workout_log(workout_id, exercise_id, log_id):
 @main.route('/api/logs/<int:workout_id>/<int:exercise_id>/<int:log_id>', methods=['DELETE'])
 def delete_workout_log(workout_id, exercise_id, log_id):
     # Get the workout, exercise, and log with the specified ids or return a 404 error
-    workout = Workout.query.get_or_404(workout_id)
+    workout = Workouts.query.get_or_404(workout_id)
     exercise = Exercise.query.get_or_404(exercise_id)
     log = WorkoutLog.query.get_or_404(log_id)
 
@@ -143,7 +145,7 @@ def delete_workout_log(workout_id, exercise_id, log_id):
 @main.route('/api/workouts/<int:workout_id>/exercises/<int:exercise_id>/logs', methods=['DELETE'])
 def delete_workout_logs(workout_id, exercise_id):
     # Get the workout and exercise with the specified ids or return a 404 error
-    workout = Workout.query.get_or_404(workout_id)
+    workout = Workouts.query.get_or_404(workout_id)
     exercise = Exercise.query.get_or_404(exercise_id)
 
     # Get the logs for the specified workout and exercise
@@ -156,3 +158,44 @@ def delete_workout_logs(workout_id, exercise_id):
 
     # Return a success message
     return jsonify({'message': 'Logs deleted successfully'})
+
+@main.route('/api/exportWorkouts/<int:id>', methods=['GET'])
+def export_workout(id):
+    # Get the workout with the specified id or return a 404 error
+    workout = Workouts.query.get_or_404(id)
+
+    # Get the exercises for the workout
+    exercises = Exercise.query.filter_by(workouts_id=id).all()
+
+    # Get the logs for each exercise
+    logs_data = []
+    for exercise in exercises:
+        logs = WorkoutLog.query.filter_by(exercise_id=exercise.id).all()
+        for log in logs:
+            try: 
+                date = log.date
+            except OperationalError:
+                date = "N/A"
+            logs_data.append({
+                'workout_id': id,
+                'date': date,
+                'exercise_id': exercise.id,
+                'log_id': log.id,
+                'sets': log.sets,
+                'reps': log.reps,
+                'weight_lbs': log.weight_lbs,
+                'notes': log.notes
+            })
+    output = BytesIO()
+    writer = pd.ExcelWriter(output, engine='xlsxwriter')
+    pd.DataFrame(logs_data).to_excel(writer, sheet_name=workout.title, index=False)
+    writer.book.close()
+    excel_data = output.getvalue() 
+    response = Response(
+        excel_data,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-disposition":
+                 f"attachment; filename={workout.title}_logs.xlsx"}
+    )
+
+    return response 

@@ -2,6 +2,7 @@ import React, { useEffect, useState} from 'react';
 import Modal from 'react-modal';
 //import axios from 'axios';
 import { Container, Header, Input, Button, Sheet, AddEditWorkout, MessageItem } from './components/styles/styles';
+import { saveAs } from 'file-saver';
 
 const App = () => {
   const [workoutModalIsOpen, setWorkoutModalIsOpen] = useState(false);
@@ -14,6 +15,8 @@ const App = () => {
   const [timer, setTimer] = useState(0);
   const [timerRunning, setTimerRunning] = useState(false);
   const [workoutLogs, setWorkoutLogs] = useState([]);
+  const [currentLog, setCurrentLog] = useState(null);
+  const [currentExercise, setCurrentExercise] = useState(null);
 
   // Initialize workouts for the app by fetching data from the backend
   useEffect(() => {
@@ -156,7 +159,6 @@ const App = () => {
     // Close the modal
     setWorkoutModalIsOpen(false);
   };
-  
 
   const updateWorkout = async (newWorkoutsData) => { // newWorkoutsData is the new data we want to update coming from the form
     console.log('newWorkoutsData', newWorkoutsData);
@@ -246,9 +248,52 @@ const App = () => {
     setExercises(newExercises);
   };
 
-  const logWorkout = () => {}
+  const handleLogButtonClick = (exercise) => {
+    setCurrentLog(exercise);
+  }
 
-  const exportWorkouts = () => {}
+  const handleLogSubmit = (event) => {
+    event.preventDefault();
+
+    // Get the form data
+    const sets = event.target.elements.sets.value;
+    const reps = event.target.elements.reps.value;
+    const weight = event.target.elements.weight.value;
+
+    // Create a new log
+    const log = {
+      exerciseId: currentExercise.id,
+      sets,
+      reps,
+      weight,
+      date: new Date(),
+    };
+
+    setCurrentExercise(null);
+  };
+
+  const exportWorkout = async () => {
+    console.log('exporting workout...');
+
+    // Send a GET request to the export endpoint
+    const response = await fetch(`/api/exportWorkouts/${selectedWorkout.id}`);
+
+    // Check if the request was successful
+    if (!response.ok) {
+      console.error('Failed to export workout');
+      return;
+    }
+
+    // Get the filename from the Content-Disposition header
+    const contentDisposition = response.headers.get('Content-Disposition');
+    const filename = contentDisposition.split('filename=')[1];
+
+    // Get the file data from the response
+    const blob = await response.blob();
+
+    // Use FileSaver to save the file
+    saveAs(blob, filename);
+  };
 
   // Render the app
   return (
@@ -267,6 +312,7 @@ const App = () => {
         </select>
         <Button onClick={handleAddWorkout}>Add Workout</Button>
         <Button onClick={handleEditWorkout}>Edit Workout</Button>
+        <Button onClick={exportWorkout}>Export Workout</Button>
         </AddEditWorkout>
         {selectedWorkout ? (
         <>
@@ -296,6 +342,9 @@ const App = () => {
                     <button onClick={pauseTimer}>Pause</button>
                     <button onClick={resumeTimer}>Resume</button>
                     <button onClick={resetTimer}>Reset</button>
+                  </td>
+                  <td>
+                    <button onClick={() => handleLogButtonClick(exercise)}>Log</button>
                   </td>
                   {/* TODO: <td></td> add progress bar here with new date, set number, and reps performed storage */}
                 </tr>
@@ -367,6 +416,28 @@ const App = () => {
                 </div>
             </form>
       </Modal>
+
+      <Modal isOpen={currentLog !== null}>
+        <h2>Log {currentLog ? currentLog.name : ''}</h2>
+        <form onSubmit={handleLogSubmit}>
+          <label>
+            Sets:
+            <input type="number" name="sets" />
+          </label>
+          <label>
+            Reps:
+            <input type="number" name="reps" />
+          </label>
+          <label>
+            Weight:
+            <input type="number" name="weight" />
+          </label>
+          <button type="button" onClick={() => console.log('added set')}>+</button>
+          <button type="button" onClick={() => console.log('added set')}>-</button>
+        </form>
+        <Button type="submit">Save Log</Button>
+        <Button type="button" onClick={() => setCurrentLog(null)}>Cancel</Button>
+    </Modal>
 
     </Container>
   );

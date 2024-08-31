@@ -33,7 +33,7 @@ class Exercise(db.Model):
 
 class WorkoutLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    date= db.Column(db.Date, nullable=False)
+    date = db.Column(db.Date, nullable=True)
     sets = db.Column(db.Integer, nullable=False)
     reps = db.Column(db.Integer, nullable=False)
     weight_lbs = db.Column(db.Float, nullable=False)
@@ -44,6 +44,7 @@ class WorkoutLog(db.Model):
     def to_dict(self):
         return {
             'id': self.id,
+            'date': self.date,
             'workouts_id': self.workouts_id,
             'sets': self.sets,
             'reps': self.reps,

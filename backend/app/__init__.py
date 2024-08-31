@@ -5,7 +5,7 @@ db = SQLAlchemy()
 from flask import Flask 
 from flask_cors import CORS
 
-from .models import Workouts, Exercise 
+from .models import Workouts, Exercise, WorkoutLog 
 #from .routes import *
 
 def create_app():
