@@ -20,11 +20,13 @@ const App = () => {
   const [editingIndex, setEditingIndex] = useState(null);
   const [timer, setTimer] = useState(0);
   const [timerRunning, setTimerRunning] = useState(false);
+  const [logModalIsOpen, setLogModalIsOpen] = useState(false);
   const [workoutLogs, setWorkoutLogs] = useState([]);
   const [exerciseLogs, setExerciseLogs] = useState({});
-  const [currentLog, setCurrentLog] = useState(null);
-  const [currentExercise, setCurrentExercise] = useState(null);
+  const [currentLog, setCurrentLog] = useState([{ reps: '', weight: '' }]);
+  const [currentExerciseLog, setCurrentExerciseLog] = useState(null);
   const [sets, setSets] = useState([{ reps: '', weight: '' }]);
+  const [logDate, setCurrentLogDate] = useState(null);
 
   // Clock
   useEffect(() => {
@@ -61,16 +63,16 @@ const App = () => {
 
   // Logs 
   useEffect(() => {
-    if (currentExercise) {
+    if (currentExerciseLog) {
       setExerciseLogs(prevLogs => {
         const logs = {...prevLogs};
-        if (!logs[currentExercise.id]) {
-          logs[currentExercise.id] = [{ reps: '', weight: '' }];
+        if (!logs[currentExerciseLog.id]) {
+          logs[currentExerciseLog.id] = [{ reps: '', weight: '' }];
         }
         return logs;
       });
     }
-  }, [currentExercise]);
+  }, [currentExerciseLog]);
 
   // Timer functions
   const startTimer = (rest) => {
@@ -277,8 +279,29 @@ const App = () => {
     setExercises(newExercises);
   };
 
-  const handleLogButtonClick = (exercise) => {
-    setCurrentLog(exercise);
+  const handleOpenLogModal = (exerciseId, date) => {
+    setLogModalIsOpen(true);
+    setCurrentExerciseLog(exerciseId);
+    console.log('exerciseId', exerciseId);
+    setCurrentLogDate(date);
+  
+    if (!exerciseLogs[exerciseId] || !exerciseLogs[exerciseId][date]) {
+      const newLog = [{ reps: '', weight: '' }];
+      setExerciseLogs(prevLogs => ({
+        ...prevLogs,
+        [exerciseId]: {
+          ...prevLogs[exerciseId],
+          [date]: newLog,
+        },
+      }));
+      setCurrentLog(newLog)
+    } else {
+      setCurrentLog(exerciseLogs[exerciseId][date]);
+    }
+  };
+
+  const handleCloseLogModal = () => {
+    setLogModalIsOpen(false);
   }
 
   const handleLogSubmit = (event) => {
@@ -291,22 +314,24 @@ const App = () => {
 
     // Create a new log
     const log = {
-      exerciseId: currentExercise.id,
+      exerciseId: currentExerciseLog.id,
       sets,
       reps,
       weight,
       date: new Date(),
     };
 
-    setCurrentExercise(null);
+    setCurrentExerciseLog(null);
   };
 
   const handleAddExerciseSetLog = (exerciseId) => {
-    setExerciseLogs(prevLogs => { 
-      const logs = {...prevLogs};
-      logs[exerciseId] = [...(logs[exerciseId] || []), { reps: '', weight: '' }];
-      return logs;
-    }); 
+    setExerciseLogs(prevLogs => ({ 
+      ...prevLogs,
+      [currentExerciseLog]: {
+        ...prevLogs[currentExerciseLog],
+        [logDate]: [...prevLogs[currentExerciseLog][logDate], { reps: '', weight: '' }],
+      }
+    }));
   };
 
   const handleRemoveExerciseSetLog = (exerciseId, index) => {
@@ -394,7 +419,7 @@ const App = () => {
                     <button onClick={resetTimer}>Reset</button>
                   </td>
                   <td>
-                    <button onClick={() => handleLogButtonClick(exercise)}>Log</button>
+                    <button onClick={() => handleOpenLogModal(exercise, date)}>Log</button>
                   </td>
                   {/* TODO: <td></td> add progress bar here with new date, set number, and reps performed storage */}
                 </tr>
@@ -467,8 +492,8 @@ const App = () => {
             </form>
       </Modal>
 
-      <Modal isOpen={currentLog !== null}>
-        <h2>Log {currentLog ? currentLog.name : ''}</h2>
+      <Modal isOpen={logModalIsOpen}>
+        <h2>{currentLog ? currentLog.name : ''} Log</h2>
         <select> 
           <option>Select Log Date</option>
           <option>Today</option>
@@ -495,7 +520,7 @@ const App = () => {
           ))}
         </form>
         <Button type="submit">Save Log</Button>
-        <Button type="button" onClick={() => setCurrentLog(null)}>Cancel</Button>
+        <Button type="button" onClick={handleCloseLogModal}>Cancel</Button>
     </Modal>
 
     </Container>
