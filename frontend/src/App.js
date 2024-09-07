@@ -17,16 +17,12 @@ const App = () => {
   const [selectedWorkout, setSelectedWorkout] = useState({title: '', exercises: []});
   const [editWorkout, setEditWorkout] = useState(false);
   const [exercises, setExercises] = useState([{name: '', sets: '', reps: '', rest: ''}]);
-  const [editingIndex, setEditingIndex] = useState(null);
+  // const [editingIndex, setEditingIndex] = useState(null);
   const [timer, setTimer] = useState(0);
   const [timerRunning, setTimerRunning] = useState(false);
   const [logModalIsOpen, setLogModalIsOpen] = useState(false);
-  const [workoutLogs, setWorkoutLogs] = useState([]);
-  const [exerciseLogs, setExerciseLogs] = useState({});
-  const [currentLog, setCurrentLog] = useState([{ reps: '', weight: '' }]);
-  const [currentExerciseLog, setCurrentExerciseLog] = useState(null);
-  const [sets, setSets] = useState([{ reps: '', weight: '' }]);
-  const [logDate, setCurrentLogDate] = useState(null);
+  const [exerciseLogs, setExerciseLogs] = useState([{}]);
+  const [currentExerciseToLog, setCurrentExerciseToLog] = useState(null);
 
   // Clock
   useEffect(() => {
@@ -63,16 +59,8 @@ const App = () => {
 
   // Logs 
   useEffect(() => {
-    if (currentExerciseLog) {
-      setExerciseLogs(prevLogs => {
-        const logs = {...prevLogs};
-        if (!logs[currentExerciseLog.id]) {
-          logs[currentExerciseLog.id] = [{ reps: '', weight: '' }];
-        }
-        return logs;
-      });
-    }
-  }, [currentExerciseLog]);
+    // add call to fetch logs from the database
+  }, []);
 
   // Timer functions
   const startTimer = (rest) => {
@@ -108,9 +96,9 @@ const App = () => {
     const exercisesData = await exercisesResponse.json();
     setExercises(exercisesData);
 
-    const logsResponse = await fetch(`/api/logs/${workoutsId}`);
-    const logsData = await logsResponse.json();
-    setWorkoutLogs(logsData);
+    // const logsResponse = await fetch(`/api/logs/${workoutsId}`);
+    // const logsData = await logsResponse.json();
+    // setExerciseLogs(logsData);
   };
 
 
@@ -281,22 +269,13 @@ const App = () => {
 
   const handleOpenLogModal = (exerciseId, date) => {
     setLogModalIsOpen(true);
-    setCurrentExerciseLog(exerciseId);
-    console.log('exerciseId', exerciseId);
-    setCurrentLogDate(date);
-  
+    setCurrentExerciseToLog(exerciseId.name);
+    // If log for this exercise and date doesn't exist, initialize it
     if (!exerciseLogs[exerciseId] || !exerciseLogs[exerciseId][date]) {
-      const newLog = [{ reps: '', weight: '' }];
-      setExerciseLogs(prevLogs => ({
-        ...prevLogs,
-        [exerciseId]: {
-          ...prevLogs[exerciseId],
-          [date]: newLog,
-        },
-      }));
-      setCurrentLog(newLog)
-    } else {
-      setCurrentLog(exerciseLogs[exerciseId][date]);
+      setExerciseLogs([{
+        ...exerciseLogs,
+        [exerciseId]: { ...(exerciseLogs[exerciseId] || {}), [date]: { sets: [{ reps: '', weight: '' }] } },
+      }]);
     }
   };
 
@@ -313,36 +292,16 @@ const App = () => {
     const weight = event.target.elements.weight.value;
 
     // Create a new log
-    const log = {
-      exerciseId: currentExerciseLog.id,
-      sets,
-      reps,
-      weight,
-      date: new Date(),
-    };
-
-    setCurrentExerciseLog(null);
   };
 
-  const handleAddExerciseSetLog = (exerciseId) => {
-    setExerciseLogs(prevLogs => ({ 
-      ...prevLogs,
-      [currentExerciseLog]: {
-        ...prevLogs[currentExerciseLog],
-        [logDate]: [...prevLogs[currentExerciseLog][logDate], { reps: '', weight: '' }],
-      }
-    }));
+  const handleAddExerciseSetLog = (exerciseId, date) => {
+    console.log('Exercise Row Added');
+    console.log(exerciseLogs);
   };
 
   const handleRemoveExerciseSetLog = (exerciseId, index) => {
-    setExerciseLogs(prevLogs => {
-      const logs = {...prevLogs};
-      logs[exerciseId] = logs[exerciseId].filter((set, i) => i !== index);
-      if (logs[exerciseId].length === 0) {
-        logs[exerciseId] = [{ reps: '', weight: '' }];
-      }
-      return logs
-    });
+    console.log('Exercise Row Removed');
+    console.log(exerciseLogs);
   };
 
   const exportWorkout = async () => {
@@ -493,14 +452,14 @@ const App = () => {
       </Modal>
 
       <Modal isOpen={logModalIsOpen}>
-        <h2>{currentLog ? currentLog.name : ''} Log</h2>
+        <h2>{currentExerciseToLog} Log</h2>
         <select> 
           <option>Select Log Date</option>
           <option>Today</option>
           <option>Yesterday</option>
         </select>
         <form onSubmit={handleLogSubmit}>
-          {currentLog && exerciseLogs[currentLog.id] && exerciseLogs[currentLog.id].map((set, index) => (
+          {exerciseLogs.map((index) => (
             <div key={index}> 
           <label>
             Set: {index + 1}
@@ -514,8 +473,8 @@ const App = () => {
             Weight:
             <input type="number" name={`weight: ${index}`} />
           </label>
-          <button type="button" onClick={() => handleAddExerciseSetLog(currentLog.id)}>+</button>
-          <button type="button" onClick={() => handleRemoveExerciseSetLog(currentLog.id, index)}>-</button>
+          <button type="button" onClick={() => handleAddExerciseSetLog(index)}>+</button>
+          <button type="button" onClick={() => handleRemoveExerciseSetLog(index)}>-</button>
             </div>
           ))}
         </form>
