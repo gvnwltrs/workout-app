@@ -11,18 +11,21 @@ const App = () => {
   // const time = today.toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', second: 'numeric' });
 
   const [time, setTime] = useState(new Date().toLocaleTimeString());
+
   const [workoutModalIsOpen, setWorkoutModalIsOpen] = useState(false);
   const [workoutName, setWorkoutName] = useState('');
   const [workouts, setWorkouts] = useState([]);
   const [selectedWorkout, setSelectedWorkout] = useState({title: '', exercises: []});
   const [editWorkout, setEditWorkout] = useState(false);
+
   const [exercises, setExercises] = useState([{name: '', sets: '', reps: '', rest: ''}]);
-  // const [editingIndex, setEditingIndex] = useState(null);
+
   const [timer, setTimer] = useState(0);
   const [timerRunning, setTimerRunning] = useState(false);
+
   const [logModalIsOpen, setLogModalIsOpen] = useState(false);
-  const [exerciseLogs, setExerciseLogs] = useState([{}]);
-  const [currentExerciseToLog, setCurrentExerciseToLog] = useState(null);
+  const [exerciseLogs, setExerciseLogs] = useState([]);
+  const [selectedExercise, setSelectedExercise] = useState(null);
 
   // Clock
   useEffect(() => {
@@ -267,16 +270,15 @@ const App = () => {
     setExercises(newExercises);
   };
 
-  const handleOpenLogModal = (exerciseId, date) => {
+  const handleOpenLogModal = (exercise) => {
+    setSelectedExercise(exercise);
+    // Initialize logs for this exercise if not already present
+    const logsForExercise = exerciseLogs[exercise.name] || [];
+    setExerciseLogs(prevLogs => ({
+      ...prevLogs,
+      [exercise.name]: logsForExercise.length > 0 ? logsForExercise : [{ sets: 1, reps: '', weight: '' }]
+    }));
     setLogModalIsOpen(true);
-    setCurrentExerciseToLog(exerciseId.name);
-    // If log for this exercise and date doesn't exist, initialize it
-    if (!exerciseLogs[exerciseId] || !exerciseLogs[exerciseId][date]) {
-      setExerciseLogs([{
-        ...exerciseLogs,
-        [exerciseId]: { ...(exerciseLogs[exerciseId] || {}), [date]: { sets: [{ reps: '', weight: '' }] } },
-      }]);
-    }
   };
 
   const handleCloseLogModal = () => {
@@ -294,14 +296,18 @@ const App = () => {
     // Create a new log
   };
 
-  const handleAddExerciseSetLog = (exerciseId, date) => {
-    console.log('Exercise Row Added');
-    console.log(exerciseLogs);
+  const handleAddLogRow = () => {
+      setExerciseLogs(prevLogs => ({
+        ...prevLogs,
+        [selectedExercise.name]: [...prevLogs[selectedExercise.name], { sets: prevLogs[selectedExercise.name].length + 1, reps: '', weight: '' }]
+      }));
   };
 
-  const handleRemoveExerciseSetLog = (exerciseId, index) => {
-    console.log('Exercise Row Removed');
-    console.log(exerciseLogs);
+  const handleRemoveLogRow = (index) => {
+    setExerciseLogs(prevLogs => ({
+      ...prevLogs,
+      [selectedExercise.name]: prevLogs[selectedExercise.name].filter((_, i) => i !== index)
+    }));
   };
 
   const exportWorkout = async () => {
@@ -378,7 +384,7 @@ const App = () => {
                     <button onClick={resetTimer}>Reset</button>
                   </td>
                   <td>
-                    <button onClick={() => handleOpenLogModal(exercise, date)}>Log</button>
+                    <button onClick={() => handleOpenLogModal(exercise, index)}>Log</button>
                   </td>
                   {/* TODO: <td></td> add progress bar here with new date, set number, and reps performed storage */}
                 </tr>
@@ -452,32 +458,47 @@ const App = () => {
       </Modal>
 
       <Modal isOpen={logModalIsOpen}>
-        <h2>{currentExerciseToLog} Log</h2>
+        <h2>{selectedExercise?.name} Log</h2>
         <select> 
           <option>Select Log Date</option>
           <option>Today</option>
           <option>Yesterday</option>
         </select>
         <form onSubmit={handleLogSubmit}>
-          {exerciseLogs.map((index) => (
+          {exerciseLogs[selectedExercise?.name]?.map((log, index) => (
             <div key={index}> 
-          <label>
-            Set: {index + 1}
-          </label>
-          <br />
-          <label>
-            Reps:
-            <input type="number" name={`reps: ${index}`} />
-          </label>
-          <label>
-            Weight:
-            <input type="number" name={`weight: ${index}`} />
-          </label>
-          <button type="button" onClick={() => handleAddExerciseSetLog(index)}>+</button>
-          <button type="button" onClick={() => handleRemoveExerciseSetLog(index)}>-</button>
+              <label>Set: {log.sets}</label>
+              <input
+                type="number"
+                placeholder="Reps"
+                value={log.reps}
+                onChange={e => {
+                  const updatedLogs = [...exerciseLogs[selectedExercise.name]];
+                  updatedLogs[index].reps = e.target.value;
+                  setExerciseLogs(prevLogs => ({
+                    ...prevLogs,
+                    [selectedExercise.name]: updatedLogs
+                  }));
+                }}
+              />
+              <input
+                type="number"
+                placeholder="Weight"
+                value={log.weight}
+                onChange={e => {
+                  const updatedLogs = [...exerciseLogs[selectedExercise.name]];
+                  updatedLogs[index].weight = e.target.value;
+                  setExerciseLogs(prevLogs => ({
+                    ...prevLogs,
+                    [selectedExercise.name]: updatedLogs
+                  }));
+                }}
+              />
+              <button type="button" onClick={() => handleRemoveLogRow(index)}>-</button>
             </div>
           ))}
         </form>
+        <Button type="button" onClick={handleAddLogRow}>Add Set</Button>
         <Button type="submit">Save Log</Button>
         <Button type="button" onClick={handleCloseLogModal}>Cancel</Button>
     </Modal>
