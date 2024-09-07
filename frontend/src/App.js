@@ -26,6 +26,7 @@ const App = () => {
   const [logModalIsOpen, setLogModalIsOpen] = useState(false);
   const [exerciseLogs, setExerciseLogs] = useState([]);
   const [selectedExercise, setSelectedExercise] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(new Date().toLocaleDateString());
 
   // Clock
   useEffect(() => {
@@ -285,30 +286,63 @@ const App = () => {
     setLogModalIsOpen(false);
   }
 
-  const handleLogSubmit = (event) => {
-    event.preventDefault();
-
-    // Get the form data
-    const sets = event.target.elements.sets.value;
-    const reps = event.target.elements.reps.value;
-    const weight = event.target.elements.weight.value;
-
-    // Create a new log
-  };
 
   const handleAddLogRow = () => {
-      setExerciseLogs(prevLogs => ({
-        ...prevLogs,
-        [selectedExercise.name]: [...prevLogs[selectedExercise.name], { sets: prevLogs[selectedExercise.name].length + 1, reps: '', weight: '' }]
-      }));
-  };
-
-  const handleRemoveLogRow = (index) => {
     setExerciseLogs(prevLogs => ({
       ...prevLogs,
-      [selectedExercise.name]: prevLogs[selectedExercise.name].filter((_, i) => i !== index)
+      [selectedExercise.name]: {
+        ...prevLogs[selectedExercise.name],
+        [selectedDate]: [
+          ...(prevLogs[selectedExercise.name][selectedDate] || []),
+          { sets: (prevLogs[selectedExercise.name][selectedDate]?.length || 0) + 1, reps: '', weight: '' }
+        ]
+      }
     }));
   };
+
+  const handleRemoveLogRow = () => {
+    setExerciseLogs(prevLogs => {
+      const logsForDate = prevLogs[selectedExercise.name][selectedDate] || [];
+      if (logsForDate.length > 0) {
+        const updatedLogs = logsForDate.slice(0, -1); // Remove the last row
+        return {
+          ...prevLogs,
+          [selectedExercise.name]: {
+            ...prevLogs[selectedExercise.name],
+            [selectedDate]: updatedLogs
+          }
+        };
+      }
+      return prevLogs; // No changes if there are no logs
+    });
+  };
+
+  const handleLogSubmit = (event) => {
+    event.preventDefault(); // Prevent page reload
+    console.log('Exercise Logged');
+
+    // Iterate through the current logs for the selected exercise and date
+    const formElements = event.target.elements; // Get all form elements
+    const updatedLogs = (exerciseLogs[selectedExercise?.name]?.[selectedDate] || []).map((log, index) => {
+      return {
+        sets: log.sets,
+        reps: formElements[`reps-${index}`].value, // Capture the reps input for each set
+        weight: formElements[`weight-${index}`].value // Capture the weight input for each set
+      };
+    });
+
+    // Update the exerciseLogs state with the new values
+    setExerciseLogs(prevLogs => ({
+      ...prevLogs,
+      [selectedExercise.name]: {
+        ...prevLogs[selectedExercise.name],
+        [selectedDate]: updatedLogs // Update the logs for the selected date
+      }
+    }));
+
+  // Close the modal after saving
+  handleCloseLogModal();
+};
 
   const exportWorkout = async () => {
     console.log('exporting workout...');
@@ -459,48 +493,63 @@ const App = () => {
 
       <Modal isOpen={logModalIsOpen}>
         <h2>{selectedExercise?.name} Log</h2>
-        <select> 
+        {/* Date Picker */}
+        {/* <select> 
           <option>Select Log Date</option>
           <option>Today</option>
           <option>Yesterday</option>
+        </select> */}
+        <select value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)}>
+          <option value={new Date().toLocaleDateString()}>Today</option>
+          {Object.keys(exerciseLogs[selectedExercise?.name] || {}).map(date => (
+            <option key={date} value={date}>{date}</option>
+          ))}
         </select>
         <form onSubmit={handleLogSubmit}>
-          {exerciseLogs[selectedExercise?.name]?.map((log, index) => (
+          {(exerciseLogs[selectedExercise?.name]?.[selectedDate] || []).map((log, index) => (
             <div key={index}> 
               <label>Set: {log.sets}</label>
               <input
                 type="number"
+                name={`reps-${index}`}
                 placeholder="Reps"
                 value={log.reps}
                 onChange={e => {
-                  const updatedLogs = [...exerciseLogs[selectedExercise.name]];
+                  const updatedLogs = [...exerciseLogs[selectedExercise.name][selectedDate]];
                   updatedLogs[index].reps = e.target.value;
                   setExerciseLogs(prevLogs => ({
                     ...prevLogs,
-                    [selectedExercise.name]: updatedLogs
+                    [selectedExercise.name]: {
+                    ...prevLogs[selectedExercise.name],
+                    [selectedDate]: updatedLogs
+                  }
                   }));
                 }}
               />
               <input
-                type="number"
-                placeholder="Weight"
-                value={log.weight}
-                onChange={e => {
-                  const updatedLogs = [...exerciseLogs[selectedExercise.name]];
-                  updatedLogs[index].weight = e.target.value;
-                  setExerciseLogs(prevLogs => ({
-                    ...prevLogs,
-                    [selectedExercise.name]: updatedLogs
-                  }));
-                }}
-              />
-              <button type="button" onClick={() => handleRemoveLogRow(index)}>-</button>
+               type="number"
+               name={`weight-${index}`}
+               placeholder="Weight"
+               value={log.weight}
+               onChange={e => {
+               const updatedLogs = [...exerciseLogs[selectedExercise.name][selectedDate]];
+               updatedLogs[index].weight = e.target.value;
+               setExerciseLogs(prevLogs => ({
+                  ...prevLogs,
+                  [selectedExercise.name]: {
+                  ...prevLogs[selectedExercise.name],
+                  [selectedDate]: updatedLogs
+            }
+          }));
+        }}
+      />
             </div>
           ))}
-        </form>
         <Button type="button" onClick={handleAddLogRow}>Add Set</Button>
+        <Button type="button" onClick={handleRemoveLogRow}>Remove Set</Button>
         <Button type="submit">Save Log</Button>
         <Button type="button" onClick={handleCloseLogModal}>Cancel</Button>
+        </form>
     </Modal>
 
     </Container>
