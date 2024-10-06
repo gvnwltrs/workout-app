@@ -70,20 +70,23 @@ def delete_exercises(id):
     db.session.commit()
     return jsonify({'message': 'Exercise deleted successfully'}), 200
 
-@main.route('/api/logs/<int:workout_id>/<int:exercise_id>', methods=['GET'])
-def get_workout_logs(workout_id, exercise_id):
+@main.route('/api/logs/get/<int:workout_id>/<int:exercise_id>/<string:date>', methods=['GET'])
+def get_workout_logs(workout_id, exercise_id, date):
     # Get the workout and exercise with the specified ids or return a 404 error
     workout = Workouts.query.get_or_404(workout_id)
     exercise = Exercise.query.get_or_404(exercise_id)
 
     # Get the workout logs for the exercise
-    logs = WorkoutLog.query.filter_by(workouts_id=workout_id, exercise_id=exercise_id).all()
+    logs = WorkoutLog.query.filter_by(workouts_id=workout_id, exercise_id=exercise_id, date=date).all()
+
+    if not logs:
+        return jsonify({'message': 'No logs found'}), 404 
 
     # Convert the logs to dictionaries and return them
-    return jsonify([log.to_dict() for log in logs])
+    return jsonify([log.to_dict() for log in logs]), 200
 
-@main.route('/api/logs/<int:workout_id>/<int:exercise_id>', methods=['POST'])
-def add_workout_logs(workout_id, exercise_id):
+@main.route('/api/logs/add/<int:workout_id>/<int:exercise_id>/<string:date>', methods=['POST'])
+def add_workout_logs(workout_id, exercise_id, date):
     # Get the workout and exercise with the specified ids or return a 404 error
     workout = Workouts.query.get_or_404(workout_id)
     exercise = Exercise.query.get_or_404(exercise_id)
@@ -92,7 +95,7 @@ def add_workout_logs(workout_id, exercise_id):
     log_data = request.get_json()
 
     # Create and add the workout log
-    log = WorkoutLog(workouts_id=workout_id, sets=log_data['sets'], reps=log_data['reps'], weight_lbs=log_data['weight_lbs'], notes=log_data['notes'], exercise_id=exercise_id)
+    log = WorkoutLog(workouts_id=workout_id, sets=log_data['sets'], reps=log_data['reps'], weight_lbs=log_data['weight_lbs'], notes=log_data['notes'], exercise_id=exercise_id, date=log_data['date'])
     db.session.add(log)
     db.session.commit()
 
