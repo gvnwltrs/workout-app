@@ -347,20 +347,30 @@ const App = () => {
   }
 
   const handleLogSubmit = (event) => {
+    console.log('Current Logs for Submit: ', currentLogs);
 
-    // const saveLogs = async () => {
-    //   try {
-    //     const response = await fetch(`/api/logs/${selectedWorkout.id}/${selectedExercise.id}/${selectedDate}`, {
-    //       method: 'POST',
-    //       headers: {
-    //         'Content-Type': 'application/json',
-    //       },
-    //       body: JSON.stringify(currentLogs),
-    //     }); 
-    //   } catch (error) {
-    //     console.error('Failed to save logs', error);
-    //   }
-    // }
+    const saveLogs = async () => {
+      const logData = {
+        log: currentLogs,
+        date: selectedDate,
+      };
+      try {
+
+        const encodedDate = encodeURIComponent(selectedDate);
+        // const response = await fetch(`/api/workoutlogs/add/${selectedWorkout.id}/${selectedExercise.id}/${encodedDate}`, {
+        const response = await fetch(`/api/workoutlogs/add/${selectedWorkout.id}/${selectedExercise.id}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          // body: JSON.stringify(currentLogs),
+          body: JSON.stringify(logData),
+        }); 
+      } catch (error) {
+        console.error('Failed to save logs', error);
+      }
+    }
+    saveLogs();
 
     setExerciseLogs(prev => ({
       ...prev,

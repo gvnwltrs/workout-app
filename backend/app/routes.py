@@ -2,6 +2,7 @@ import pandas as pd
 from flask import Blueprint, jsonify, request, send_file, Response
 from io import StringIO, BytesIO
 from .models import db, Workouts, Exercise, WorkoutLog
+from urllib.parse import unquote
 
 main = Blueprint('main', __name__)
 
@@ -85,22 +86,42 @@ def get_workout_logs(workout_id, exercise_id, date):
     # Convert the logs to dictionaries and return them
     return jsonify([log.to_dict() for log in logs]), 200
 
-@main.route('/api/logs/add/<int:workout_id>/<int:exercise_id>/<string:date>', methods=['POST'])
-def add_workout_logs(workout_id, exercise_id, date):
+# @main.route('/api/workoutlogs/add/<int:workout_id>/<int:exercise_id>/<string:date>', methods=['POST'])
+@main.route('/api/workoutlogs/add/<int:workout_id>/<int:exercise_id>', methods=['POST'])
+def add_workout_logs(workout_id, exercise_id):
     # Get the workout and exercise with the specified ids or return a 404 error
     workout = Workouts.query.get_or_404(workout_id)
     exercise = Exercise.query.get_or_404(exercise_id)
 
+
     # Get the workout log from the request body
     log_data = request.get_json()
 
+    # print(f"workout_id: {workout_id} | exercise_id: {exercise_id} | date: {date}")
+    print(f"workout_id: {workout_id} | exercise_id: {exercise_id}")
+    print(f"log_data: {log_data}")
+    # print(f"exercise log entry: {log_data['log']['reps']} reps @ {log_data['log']['weight']} lbs")
+    print(f"exercise log entry date: {log_data['date']}")
+    for i, log in enumerate(log_data['log']):
+        print(f"exercise set {i+1}: {log['reps']} reps @ {log['weight']} lbs")
+
     # Create and add the workout log
-    log = WorkoutLog(workouts_id=workout_id, sets=log_data['sets'], reps=log_data['reps'], weight_lbs=log_data['weight_lbs'], notes=log_data['notes'], exercise_id=exercise_id, date=log_data['date'])
-    db.session.add(log)
-    db.session.commit()
+    # Multiple log entries for each set
+    # for index, log in enumerate(log_data['log']):
+    #     print(f"index: {index} | log: {log}")
+    #     log = WorkoutLog(workouts_id=workout_id, sets=index+1, reps=log['reps'], weight_lbs=log['weight'], notes=log['notes'], exercise_id=exercise_id, date=log_data['date'])
+    #     db.session.add(log)
+    #     db.session.commit()
+
+    # Old single log entry
+    # decoded_date = unquote(date)
+    # log = WorkoutLog(workouts_id=workout_id, sets=log_data['sets'], reps=log_data['reps'], weight_lbs=log_data['weight_lbs'], exercise_id=exercise_id, date=decoded_date)
+    # db.session.add(log)
+    # db.session.commit()
 
     # Return the workout log
-    return jsonify(log.to_dict())
+    # return jsonify(log.to_dict())
+    return jsonify({'message': 'Got it!'}), 200
 
 @main.route('/api/logs/<int:workout_id>/<int:exercise_id>/<int:log_id>', methods=['PUT'])
 def update_workout_log(workout_id, exercise_id, log_id):
