@@ -72,20 +72,57 @@ def delete_exercises(id):
     db.session.commit()
     return jsonify({'message': 'Exercise deleted successfully'}), 200
 
-@main.route('/api/logs/get/<int:workout_id>/<int:exercise_id>/<string:date>', methods=['GET'])
-def get_workout_logs(workout_id, exercise_id, date):
+@main.route('/api/workoutlogs/handler/<int:workout_id>/<int:exercise_id>', methods=['GET'])
+def handle_workout_logs_request(workout_id, exercise_id):
+    # Get the workout and exercise with the specified ids or return a 404 error
+    workout = Workouts.query.get_or_404(workout_id)
+    exercise = Exercise.query.get_or_404(exercise_id)
+
+    # Get the workout log from the request body
+    log_data = request.get_json()
+
+    # Convert Date to format for database
+    date_for_table = datetime.strptime(log_data['date'], '%m/%d/%Y').date()
+
+    # print(f"workout_id: {workout_id} | exercise_id: {exercise_id} | date: {date}")
+    print(f"workout_id: {workout_id} | exercise_id: {exercise_id}")
+    print(f"log_data: {log_data}")
+    # print(f"exercise log entry: {log_data['log']['reps']} reps @ {log_data['log']['weight']} lbs")
+    print(f"exercise log entry date: {log_data['date']}")
+    for i, log in enumerate(log_data['log']):
+        print(f"exercise set {i+1}: {log['reps']} reps @ {log['weight']} lbs")
+
+    # Create and add the workout log
+    # Multiple log entries for each set
+    for index, log in enumerate(log_data['log']):
+        print(f"index: {index} | log: {log}")
+        log = WorkoutLog(workouts_id=workout_id, sets=index+1, reps=log['reps'], weight_lbs=log['weight'], exercise_id=exercise_id, date=date_for_table)
+        db.session.add(log)
+        db.session.commit()
+
+    return jsonify({'message': 'workout exercise entry logged for sets and reps'}), 200
+
+@main.route('/api/logs/get/<int:workout_id>/<int:exercise_id>', methods=['GET'])
+def get_workout_logs(workout_id, exercise_id):
     # Get the workout and exercise with the specified ids or return a 404 error
     workout = Workouts.query.get_or_404(workout_id)
     exercise = Exercise.query.get_or_404(exercise_id)
 
     # Get the workout logs for the exercise
-    logs = WorkoutLog.query.filter_by(workouts_id=workout_id, exercise_id=exercise_id, date=date).all()
+    logs = WorkoutLog.query.all()
 
     if not logs:
         return jsonify({'message': 'No logs found'}), 404 
+    
+    # Convert logs and reformat the date to the format the frontend expects
+    logs_dict = [
+        {**log.to_dict(), 'date': log.date.strftime('%m/%d/%Y')}  # Reformat date here
+        for log in logs
+    ]
 
     # Convert the logs to dictionaries and return them
-    return jsonify([log.to_dict() for log in logs]), 200
+    return jsonify(logs_dict), 200
+    # return jsonify([log.to_dict() for log in logs]), 200
 
 @main.route('/api/workoutlogs/add/<int:workout_id>/<int:exercise_id>', methods=['POST'])
 def add_workout_logs(workout_id, exercise_id):

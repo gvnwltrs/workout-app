@@ -1521,30 +1521,11 @@
 									"model": {
 										"$ref": "AAAAAAGRTmrZ8+VGn9s="
 									},
-									"subViews": [
-										{
-											"_type": "UMLAttributeView",
-											"_id": "AAAAAAGSakTEchsW0i8=",
-											"_parent": {
-												"$ref": "AAAAAAGRTmrZ9OVOsR4="
-											},
-											"model": {
-												"$ref": "AAAAAAGSakTEaRsQMTE="
-											},
-											"font": "Arial;13;0",
-											"left": 365,
-											"top": 334,
-											"width": 143,
-											"height": 13,
-											"text": "+Attribute1",
-											"horizontalAlignment": 0
-										}
-									],
 									"font": "Arial;13;0",
 									"left": 360,
 									"top": 329,
 									"width": 153,
-									"height": 23
+									"height": 10
 								},
 								{
 									"_type": "UMLOperationCompartmentView",
@@ -1557,7 +1538,7 @@
 									},
 									"font": "Arial;13;0",
 									"left": 360,
-									"top": 352,
+									"top": 339,
 									"width": 153,
 									"height": 10
 								},
@@ -2440,18 +2421,7 @@
 					"_parent": {
 						"$ref": "AAAAAAGRThgUx1GL0ns="
 					},
-					"name": "WorkoutComponent",
-					"attributes": [
-						{
-							"_type": "UMLAttribute",
-							"_id": "AAAAAAGSakTEaRsQMTE=",
-							"_parent": {
-								"$ref": "AAAAAAGRTmrZ8+VGn9s="
-							},
-							"name": "Attribute1",
-							"type": ""
-						}
-					]
+					"name": "WorkoutComponent"
 				},
 				{
 					"_type": "UMLClass",

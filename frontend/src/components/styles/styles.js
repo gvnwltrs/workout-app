@@ -34,6 +34,24 @@ export const Button = styled.button`
   }
 `;
 
+export const DeleteButton = styled.button`
+  background-color: #ff6b6b;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-top: 20px;
+  margin-left: 10px;
+  margin-right: 10px;
+
+  &:hover {
+    background-color: #e63946;
+  }
+`;
+
+
 export const Input = styled.input`
   padding: 10px;
   font-size: 16px;
