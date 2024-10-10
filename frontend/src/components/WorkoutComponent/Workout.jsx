@@ -1,15 +1,15 @@
-import React, { useEffect, useState} from 'react';
+import React, { useEffect, useState, useContext} from 'react';
 import Modal from 'react-modal';
 //import axios from 'axios';
-import { Container, Header, Input, Button, DeleteButton, Sheet, AddEditWorkout, MessageItem, RestTimer } from './components/styles/styles';
+import { Container, Header, Input, Button, DeleteButton, Sheet, AddEditWorkout, MessageItem, RestTimer } from '../styles/styles';
 import { saveAs } from 'file-saver';
 
+import { AppContext } from '../../App';
+
 export const Workout = () => {
-    const [workoutModalIsOpen, setWorkoutModalIsOpen] = useState(false);
-    const [workoutName, setWorkoutName] = useState('');
-    const [workouts, setWorkouts] = useState([]);
-    const [selectedWorkout, setSelectedWorkout] = useState({title: '', exercises: []});
-    const [editWorkout, setEditWorkout] = useState(false);
+    const { workouts, setWorkouts, selectedWorkout, setSelectedWorkout, workoutModalIsOpen, setWorkoutModalIsOpen, 
+        workoutName, setWorkoutName, editWorkout, setEditWorkout, setExercises, setSelectedExercise, exercises, 
+    addExercise, removeExercise } = useContext(AppContext);
     
     // Initialize workouts for the app by fetching data from the backend
     useEffect(() => {
@@ -26,19 +26,10 @@ export const Workout = () => {
     }, []);
 
     // CRUD functions
-  const loadWorkout = async (workoutsId) => {
-    const workoutsResponse = await fetch(`/api/workouts/${workoutsId}`); // transmits data incrementally from HTTP server: GET by default
-    const workoutsData = await workoutsResponse.json(); // using another await to make sure we process the whole response
-    setSelectedWorkout(workoutsData);
 
-    const exercisesResponse = await fetch(`/api/exercises/${workoutsId}`);
-    const exercisesData = await exercisesResponse.json();
-    setExercises(exercisesData);
-
-    // const logsResponse = await fetch(`/api/logs/${workoutsId}`);
-    // const logsData = await logsResponse.json();
-    // setExerciseLogs(logsData);
-  };
+  const openCloseWorkoutModal = (change) => {
+    setWorkoutModalIsOpen(change); // true open, false close
+  }
 
   const addWorkout = async () => {
     if (workouts.some(workout => workout.title === workoutName)) {
@@ -75,111 +66,96 @@ export const Workout = () => {
      setWorkoutModalIsOpen(false); // close the modal
    };
 
-   const handleAddWorkout = () => {
-    setWorkoutModalIsOpen(true);
-    setEditWorkout(false);
-    setExercises([{name: '', sets: '', reps: '', rest: ''}]);
-  }
+    const updateWorkout = async (newWorkoutsData) => { // newWorkoutsData is the new data we want to update coming from the form
+        console.log('newWorkoutsData', newWorkoutsData);
+        let response = await fetch(`/api/workouts/${selectedWorkout.id}`, { 
+        method: 'PUT', // use PUT to update the data instead of POST
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newWorkoutsData),
+        });
+        let data = await response.json(); // check if the response is ok
+        setSelectedWorkout(data); // set the new workout as the selected workout
+        setWorkouts(prev => prev.map(workout => workout.id === data.id ? data : workout));
 
-  const handleEditWorkout = async () => {
-    setWorkoutModalIsOpen(true);
-    setEditWorkout(true);
-    setWorkoutName(selectedWorkout.title);
-    
-    console.log('selectedWorkout: ', selectedWorkout);
-    const response = await fetch(`/api/exercises/${selectedWorkout.id}`);
-    const data = await response.json();
+        // Update the exercises
+        const updatedExercises = [];
+        for (const exercise of exercises) {
+        if (exercise.id) {
+            const response = await fetch(`/api/exercises/${exercise.id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(exercise),
+            });
+            const updatedExercise = await response.json();
+            updatedExercises.push(updatedExercise);
+        } else {
+            const response = await fetch(`/api/exercises/${selectedWorkout.id}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(exercise),
+            });
+            const newExercise = await response.json();
+            updatedExercises.push(newExercise);
+        }
+        }
 
-    setExercises(data);
-  }
+        // Fetch the updated workout
+        response = await fetch(`/api/exercises/${selectedWorkout.id}`);
+        data = await response.json();
+
+        if (Array.isArray(workouts)) {
+        setWorkouts(prev => prev.map(workouts => workouts.id === data.id ? data : workouts)); // should update the workouts array with the new workout name 
+        }
+
+        setSelectedWorkout(prev => ({ ...prev, exercises: updatedExercises })); // update the selected workout with the new exercises
+        setWorkoutModalIsOpen(false);
+    }
 
   const deleteWorkout = async () => {
-    const confirmDelete = window.confirm('Are you sure you want to delete this workout?');
-    if (!confirmDelete) {
-      return;
-    }
-    await fetch(`/api/workouts/${selectedWorkout.id}`, {
-      method: 'DELETE',
-    });
-  
-    // Update the workouts state
-    const newWorkouts = workouts.filter(workout => workout.id !== selectedWorkout.id);
-    setWorkouts(newWorkouts);
-  
-    // Set the selectedWorkout state to the first workout in the workouts array
-    if (newWorkouts.length > 0) {
-      setSelectedWorkout(newWorkouts[0]);
-    } else {
-      setSelectedWorkout(null); // or set to an empty workout object if it makes more sense in your context
-    }
-  
-    // Close the modal
-    setWorkoutModalIsOpen(false);
-  };
+          const confirmDelete = window.confirm('Are you sure you want to delete this workout?');
+          if (!confirmDelete) {
+          return;
+          }
+          await fetch(`/api/workouts/${selectedWorkout.id}`, {
+          method: 'DELETE',
+          });
+      
+          // Update the workouts state
+          const newWorkouts = workouts.filter(workout => workout.id !== selectedWorkout.id);
+          setWorkouts(newWorkouts);
+      
+          // Set the selectedWorkout state to the first workout in the workouts array
+          if (newWorkouts.length > 0) {
+          setSelectedWorkout(newWorkouts[0]);
+          } else {
+          setSelectedWorkout(null); // or set to an empty workout object if it makes more sense in your context
+          }
+      
+          // Close the modal
+          setWorkoutModalIsOpen(false);
+      };
 
-  const updateWorkout = async (newWorkoutsData) => { // newWorkoutsData is the new data we want to update coming from the form
-    console.log('newWorkoutsData', newWorkoutsData);
-    let response = await fetch(`/api/workouts/${selectedWorkout.id}`, { 
-      method: 'PUT', // use PUT to update the data instead of POST
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(newWorkoutsData),
-    });
-    let data = await response.json(); // check if the response is ok
-    setSelectedWorkout(data); // set the new workout as the selected workout
-    setWorkouts(prev => prev.map(workout => workout.id === data.id ? data : workout));
-
-    // Update the exercises
-    const updatedExercises = [];
-    for (const exercise of exercises) {
-      if (exercise.id) {
-        const response = await fetch(`/api/exercises/${exercise.id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(exercise),
-        });
-        const updatedExercise = await response.json();
-        updatedExercises.push(updatedExercise);
-    } else {
-        const response = await fetch(`/api/exercises/${selectedWorkout.id}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(exercise),
-        });
-        const newExercise = await response.json();
-        updatedExercises.push(newExercise);
-      }
+    const handleCancelEditWorkout = () => {
+        openCloseWorkoutModal(false);
+        setExercises([{name: '', sets: '', reps: '', rest: ''}]);
     }
 
-    // Fetch the updated workout
-    response = await fetch(`/api/exercises/${selectedWorkout.id}`);
-    data = await response.json();
-
-    if (Array.isArray(workouts)) {
-      setWorkouts(prev => prev.map(workouts => workouts.id === data.id ? data : workouts)); // should update the workouts array with the new workout name 
-    }
-
-    setSelectedWorkout(prev => ({ ...prev, exercises: updatedExercises })); // update the selected workout with the new exercises
-    setWorkoutModalIsOpen(false);
-  }
-
-  const handleInput = (index, event) => {
-    const values = [...exercises];
-    values[index][event.target.name] = event.target.value;
-    setExercises(values);
-  };
-
-  const handleCancelEditWorkout = () => {
-    openCloseWorkoutModal(false);
-    setExercises([{name: '', sets: '', reps: '', rest: ''}]);
-  }
+    const handleInput = (index, event) => {
+        const values = [...exercises];
+        values[index][event.target.name] = event.target.value;
+        setExercises(values);
+    };
 
   return (
+    // <WorkoutContext.Provider value={{ workouts, setWorkouts, selectedWorkout, setSelectedWorkout, workoutModalIsOpen, 
+    // setWorkoutModalIsOpen, workoutName, setWorkoutName, editWorkout, setEditWorkout, addWorkout, handleAddWorkout, 
+    // handleEditWorkout, deleteWorkout, updateWorkout }}>
     <Modal isOpen={workoutModalIsOpen}>
         <h2>{editWorkout ? `Edit Workout: ${selectedWorkout.title}` : 'Add Workout'}</h2>
         <form onSubmit={(e) => {

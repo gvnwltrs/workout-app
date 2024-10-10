@@ -1,12 +1,15 @@
-import React, { useEffect, useState} from 'react';
+import React, { useEffect, useState, useContext} from 'react';
 import Modal from 'react-modal';
 //import axios from 'axios';
-import { Container, Header, Input, Button, DeleteButton, Sheet, AddEditWorkout, MessageItem, RestTimer } from './components/styles/styles';
+import { Container, Header, Input, Button, DeleteButton, Sheet, AddEditWorkout, MessageItem, RestTimer } from '../styles/styles';
 import { saveAs } from 'file-saver';
 
+import { WorkoutContext } from '../WorkoutComponent/Workout';
+
+import { AppContext } from '../../App';
+
 export const Exercises = () => {
-    const [exercises, setExercises] = useState([{name: '', sets: '', reps: '', rest: ''}]);
-    const [selectedExercise, setSelectedExercise] = useState(null);
+    const { selectedWorkout, setSelectedWorkout } = useContext(AppContext);
 
     const addExercise = () => {
         setExercises([...exercises, { name: "", sets: "", reps: "", rest: "" }]);

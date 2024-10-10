@@ -1,18 +1,16 @@
-import React, { useEffect, useState} from 'react';
+import React, { useEffect, useState, useContext} from 'react';
 import Modal from 'react-modal';
 //import axios from 'axios';
-import { Container, Header, Input, Button, DeleteButton, Sheet, AddEditWorkout, MessageItem, RestTimer } from './components/styles/styles';
+import { Container, Header, Input, Button, DeleteButton, Sheet, AddEditWorkout, MessageItem, RestTimer } from '../styles/styles';
 import { saveAs } from 'file-saver';
 
-export const WorkoutLogs = () => {
-    const [logModalIsOpen, setLogModalIsOpen] = useState(false);
-    const [exerciseLogs, setExerciseLogs] = useState({});
-    const [currentLogs, setCurrentLogs] = useState([]);
-    const [loggedDates, setLoggedDates] = useState([]);
-    const [logDebug, setLogDebug] = useState(false);
-    const [datesForCurrentLogs, setDatesForCurrentLogs] = useState([]);
+import { AppContext } from '../../App';
 
-    const [skipInitialRender, setSkipInitialRender] = useState(true);
+export const WorkoutLogs = () => {
+    const { skipInitialRender, setSkipInitialRender, selectedExercise, selecteDate, setLogDebug,
+    logDebug, setExerciseLogs, exerciseLogs, logModalIsOpen, setCurrentLogs, currentLogs, selectedDate, 
+    setSelectedDate, selectedWorkout, datesForCurrentLogs, setDatesForCurrentLogs, setLogModalIsOpen,
+setSelectedExercise } = useContext(AppContext);
 
     // Exercise Logs 
   useEffect(() => {
@@ -120,35 +118,6 @@ useEffect(() => {
   }, [currentLogs]);
 
 
-  const handleOpenLogModal = (exercise) => {
-    setSelectedExercise(exercise);
-    loadDatesForExercise();
-    setLogModalIsOpen(true);
-  };
-
-  const loadDatesForExercise= () => {
-    console.log('Selected Exercise to Extract Dates: ', selectedExercise);
-    console.log('ExerciseLogs to Extract Dates: ', exerciseLogs);
-    const logsForExercise = Object.values(exerciseLogs).filter(log => log.exercise_id === selectedExercise.id);
-    logsForExercise.forEach(log => {
-      console.log('Log: ', log);
-    });
-    console.log('Logs for Exercise: ', logsForExercise);
-    Object.values(exerciseLogs).forEach(log => {
-      console.log('Log: ', log.date);
-    });
-
-    const dates = new Set()
-    Object.values(exerciseLogs).forEach(log => {
-      dates.add(log.date);
-    });
-    console.log('Dates for current logs: ', dates);
-    if (dates.size === 0) {
-    } else {
-      setDatesForCurrentLogs(dates);
-    }
-
-  }
 
   const handleCloseLogModal = () => {
     // setCurrentLogs([]);
@@ -214,7 +183,8 @@ useEffect(() => {
     }))
 
     console.log('Exercise Logged for: ', selectedExercise.name);
-    handleCloseLogModal();
+    handleCloseLogModal(); 
+    setSelectedDate(new Date().toLocaleDateString());
   };
 
   const handleDateChange = (e) => {
