@@ -72,41 +72,88 @@ def delete_exercises(id):
     db.session.commit()
     return jsonify({'message': 'Exercise deleted successfully'}), 200
 
-@main.route('/api/workoutlogs/handler/<int:workout_id>/<int:exercise_id>', methods=['GET'])
-def handle_workout_logs_request(workout_id, exercise_id):
-    # Get the workout and exercise with the specified ids or return a 404 error
-    workout = Workouts.query.get_or_404(workout_id)
-    exercise = Exercise.query.get_or_404(exercise_id)
+# TODO: Update function name to reflect the action(s) to be taken
+def check_if_log_exists(data):
+    print("Checking if log exists...")
+    # existing_logs = WorkoutLog.query.filter_by(workout_id=workout_id, exercise_id=exercise_id, date=log_date).all()
+    existing_logs = WorkoutLog.query.filter_by(workouts_id=data['workout_id'], exercise_id=data['exercise_id'], date=data['date']).all()
+    
+    ''' TODO: 
 
-    # Get the workout log from the request body
-    log_data = request.get_json()
+    1. If there is a log that does not exist in the current data when comparing to the existing logs, 
+    then remove the log from the database and modify the already existing logs if the data is different. 
 
-    # Convert Date to format for database
-    date_for_table = datetime.strptime(log_data['date'], '%m/%d/%Y').date()
+    2. If there is a log that exists in the current data when comparing to the existing logs, 
+    then add the log to the database and modify the already existing logs if the data is different.
 
-    # print(f"workout_id: {workout_id} | exercise_id: {exercise_id} | date: {date}")
-    print(f"workout_id: {workout_id} | exercise_id: {exercise_id}")
-    print(f"log_data: {log_data}")
-    # print(f"exercise log entry: {log_data['log']['reps']} reps @ {log_data['log']['weight']} lbs")
-    print(f"exercise log entry date: {log_data['date']}")
-    for i, log in enumerate(log_data['log']):
-        print(f"exercise set {i+1}: {log['reps']} reps @ {log['weight']} lbs")
+    3. If no logs exist, then add the log to the database.
 
-    # Create and add the workout log
-    # Multiple log entries for each set
-    for index, log in enumerate(log_data['log']):
-        print(f"index: {index} | log: {log}")
-        log = WorkoutLog(workouts_id=workout_id, sets=index+1, reps=log['reps'], weight_lbs=log['weight'], exercise_id=exercise_id, date=date_for_table)
-        db.session.add(log)
-        db.session.commit()
+    4. Make data structure to describe what actions to take based on the conditions 
+    between the existing logs and the current data and return it to the caller.
+
+
+    '''
+    if (existing_logs):
+        return True
+    print("Log does not exist...")
+    return False
+
+def add_log(data):
+    workout_id = data['workout_id']
+    exercise_id = data['exercise_id']
+    date = data['date']
+    print("Adding log...")
+    for log in data['log']:
+        # print(f"exercise set {log['sets']}: {log['reps']} reps @ {log['weight']} lbs")
+        print(f"Logging: workout_id[{workout_id}] | exercise_id[{exercise_id}] on date -> {date}: {log}")
+    return jsonify({'message': 'workout exercise entry logged for sets and reps'}), 200 
+
+def delete_log(data):
+    print("Removing existing log...")
+    return jsonify({'message': 'workout exercise entry logged for sets and reps'}), 200 
+
+def modify_log(data):
+    # modify could mean to change the existing log and/or drop the existing log depending on the data provided
+    print("Modifying existing log...")
+    return jsonify({'message': 'workout exercise entry logged for sets and reps'}), 200 
+
+log_subroutines = {
+    'check_if_log_exists': check_if_log_exists,
+    'add_log': add_log,
+    'delete_log': delete_log,
+    'modify_log': modify_log
+}
+
+def decide_log_action(subroutine, data):
+    if (subroutine['check_if_log_exists'](data)):
+        subroutine['modify_log'](data)
+    else:
+        subroutine['add_log'](data)
+    return jsonify({'message': 'workout exercise entry logged for sets and reps'}), 200
+
+# ACTION 
+# @main.route('/api/workoutlogs/handler/<int:workout_id>/<int:exercise_id>', methods=['POST'])
+@main.route('/api/workoutlogs/handler', methods=['POST'])
+def handle_workout_logs_submit_request():
+    data = request.get_json()
+    print(data)
+
+    # workout_id = request_data['workout_id']
+    # exercise_id = request_data['exercise_id']
+    # log_date = request_data['date']
+    # log_entries = request_data['log']
+
+    # Retrieve all logs from the database for the given workout_id, exercise_id, and date
+    # existing_logs = WorkoutLog.query.filter_by(workout_id=workout_id, exercise_id=exercise_id, date=log_date).all()
+
+    result = decide_log_action(log_subroutines, data)
+
+    print (result)
 
     return jsonify({'message': 'workout exercise entry logged for sets and reps'}), 200
 
-@main.route('/api/logs/get/<int:workout_id>/<int:exercise_id>', methods=['GET'])
-def get_workout_logs(workout_id, exercise_id):
-    # Get the workout and exercise with the specified ids or return a 404 error
-    workout = Workouts.query.get_or_404(workout_id)
-    exercise = Exercise.query.get_or_404(exercise_id)
+@main.route('/api/logs/get', methods=['GET'])
+def get_workout_logs():
 
     # Get the workout logs for the exercise
     logs = WorkoutLog.query.all()

@@ -6,64 +6,43 @@ import { saveAs } from 'file-saver';
 
 import { AppContext } from '../../App';
 
+// DATA
 export const WorkoutLogs = () => {
     const { skipInitialRender, setSkipInitialRender, selectedExercise, selecteDate, setLogDebug,
     logDebug, setExerciseLogs, exerciseLogs, logModalIsOpen, setCurrentLogs, currentLogs, selectedDate, 
     setSelectedDate, selectedWorkout, datesForCurrentLogs, setDatesForCurrentLogs, setLogModalIsOpen,
 setSelectedExercise } = useContext(AppContext);
 
-    // Exercise Logs 
+  // ACTION
+  // Exercise Logs 
   useEffect(() => {
-    if (skipInitialRender) {
-      setSkipInitialRender(false);
-      return;
+
+    // Load logs from the backend for current date
+    const loadLogs = async () => {
+      try {
+        const response = await fetch(`/api/logs/get`);
+        if(!response.ok) {
+          throw new Error('Failed to load logs');
+        }
+        const data = await response.json();
+        console.log('Log Data Loaded: ', data);
+
+        if (!data || data.length === 0) {
+          setExerciseLogs({});
+        } else {
+          setExerciseLogs(data);
+        }
+      console.log('Exercise Logs Loaded: ', exerciseLogs);
+    } catch (error) {
+      console.error('Failed to load logs', error);
+      setExerciseLogs({});
     }
-
-    console.log('From Log Hook -> Selected Workout Data: ', selectedWorkout)
-    console.log('From Log Hook -> Selected Workout: ', selectedWorkout.title);
-    console.log('From Log Hook -> Selected Exercise: ', selectedExercise.name);
-    console.log('From Log Hook -> Selected Date: ', selectedDate);
-    console.log('From Log Hook -> Selected Exercise Data: ', selectedExercise);
-
-    setLogDebug(true);
-    if (logDebug) {
-      // Load logs from the backend for current date
-      const loadLogs = async () => {
-        try {
-          const response = await fetch(`/api/logs/get/${selectedWorkout.id}/${selectedExercise.id}`);
-          if(!response.ok) {
-            throw new Error('Failed to load logs');
-          }
-          const data = await response.json();
-          console.log('Log Data Loaded: ', data);
-
-          if (!data || data.length === 0) {
-            setExerciseLogs({});
-          } else {
-            setExerciseLogs(data);
-          }
-        console.log('Exercise Logs Loaded: ', exerciseLogs);
-      } catch (error) {
-        console.error('Failed to load logs', error);
-        setExerciseLogs({});
-      }
-    }
-    loadLogs();
   }
+  loadLogs();
+  // }, [logModalIsOpen]);
+  }, []);
 
-    // // Safely check if exercise logs exist for selected workout, exercise, and date
-    // const exerciseLogsForWorkout = exerciseLogs?.[selectedWorkout?.title];
-    // const exerciseLogsForExercise = exerciseLogsForWorkout?.[selectedExercise?.name];
-    // const exerciseLogsForDate = exerciseLogsForExercise?.[selectedDate];
-    // // if (!exerciseLogs[selectedWorkout?.title][selectedExercise?.name][selectedDate]) {
-    // if (!exerciseLogsForDate || exerciseLogsForDate.length === 0) {
-    //   setCurrentLogs([{ reps: '', weight: '' }]);
-    // } else {
-    //   setCurrentLogs(exerciseLogs[selectedWorkout?.title][selectedExercise?.name][selectedDate] || []);
-    // }
-    // console.log('ExerciseLogs: ', exerciseLogs);
-  }, [logModalIsOpen]);
-
+  // ACTION
   // New useEffect that runs whenever exerciseLogs changes
 useEffect(() => {
   if (!exerciseLogs || Object.keys(exerciseLogs).length === 0) {
@@ -113,19 +92,19 @@ useEffect(() => {
 // }, [datesForCurrentLogs]);  // This effect runs whenever the logs or selection change
 }, [selectedDate]);  // This effect runs whenever the logs or selection change
 
+// ACTION
   useEffect(() => {
     console.log('Current Logs after set: ', currentLogs);
   }, [currentLogs]);
 
-
-
+  // ACTION 
   const handleCloseLogModal = () => {
     // setCurrentLogs([]);
     setLogModalIsOpen(false);
     setSelectedDate(new Date().toLocaleDateString());
   }
 
-
+  // ACTION
   const handleAddLogRow = () => {
     setCurrentLogs(prevLogs => [
       ...prevLogs,
@@ -133,60 +112,83 @@ useEffect(() => {
     ]);
   };
 
+  // ACTION
   const handleRemoveLogRow = () => {
     setCurrentLogs(prevLogs => prevLogs.slice(0, -1)); // Remove the last log row
   }
 
-  const handleLogSubmit = (event) => {
-    console.log('Current Logs for Submit: ', currentLogs);
+  // ACTION
+  // const handleLogSubmit = (event) => {
+  //   console.log('Current Logs for Submit: ', currentLogs);
 
+  //   const saveLogs = async () => {
+  //     const logData = {
+  //       log: currentLogs,
+  //       date: selectedDate,
+  //     };
+  //     try {
+  //       const response = await fetch(`/api/workoutlogs/add/${selectedWorkout.id}/${selectedExercise.id}`, {
+  //         method: 'POST',
+  //         headers: {
+  //           'Content-Type': 'application/json',
+  //         },
+  //         // body: JSON.stringify(currentLogs),
+  //         body: JSON.stringify(logData),
+  //       }); 
+  //     } catch (error) {
+  //       console.error('Failed to save logs', error);
+  //     }
+  //   }
+  //   saveLogs();
+
+  //   setExerciseLogs(prev => ({
+  //     ...prev,
+  //     [selectedWorkout.title]: {
+  //       ...prev[selectedWorkout.title],
+  //       [selectedExercise.name]: {
+  //         ...prev[selectedWorkout.title]?.[selectedExercise.name],
+  //         [selectedDate]: currentLogs,
+  //       },
+  //     },
+  //   }))
+
+  //   console.log('Exercise Logged for: ', selectedExercise.name);
+  //   handleCloseLogModal(); 
+  //   setSelectedDate(new Date().toLocaleDateString());
+  // };
+  const handleLogSubmit = (event) => {
+    // console.log('Current Logs for Submit: ', currentLogs);
+    event.preventDefault(); // Prevent the form from submitting and refreshing the page automatically
+    console.log('Log submitted')
     const saveLogs = async () => {
       const logData = {
-        log: currentLogs,
+        workout_id: selectedWorkout.id,
+        exercise_id: selectedExercise.id,
         date: selectedDate,
+        log: currentLogs,
       };
       try {
-
-        /* TODO: Should change to make a GET request to endpoint for handling logs -- 
-        1. If the logs do not exist, then this GET request will get handled on the backend to add the entries to the database.
-        2. If the entries already exist, and they are the same as the data in the request, then the backend will not do anything.
-        3. If the entries already exist, but they are different than the data in the request, then the backend will update the entries in the database.
-        4. If the entries already exit, but a row is added, then the row wil be added to the database. 
-        5. If the entries already exist, but a row is removed, then the row will be removed from the database.
-        6. If a delete logs requesut is made, then the backend will delete the logs from the database the given date, 
-        workout_id, and exercise_id.
-        */
-
-        const response = await fetch(`/api/workoutlogs/add/${selectedWorkout.id}/${selectedExercise.id}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          // body: JSON.stringify(currentLogs),
-          body: JSON.stringify(logData),
-        }); 
-      } catch (error) {
-        console.error('Failed to save logs', error);
-      }
-    }
+          const response = await fetch(`/api/workoutlogs/handler`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            // body: JSON.stringify(currentLogs),
+            body: JSON.stringify(logData),
+          }); 
+          if (response.ok) {
+            console.log('Log saved successfully');
+            alert('Log saved successfully');
+          }
+        } catch (error) {
+          console.error('Failed to save logs', error);
+        }
+    };
     saveLogs();
-
-    setExerciseLogs(prev => ({
-      ...prev,
-      [selectedWorkout.title]: {
-        ...prev[selectedWorkout.title],
-        [selectedExercise.name]: {
-          ...prev[selectedWorkout.title]?.[selectedExercise.name],
-          [selectedDate]: currentLogs,
-        },
-      },
-    }))
-
-    console.log('Exercise Logged for: ', selectedExercise.name);
-    handleCloseLogModal(); 
-    setSelectedDate(new Date().toLocaleDateString());
+    
   };
 
+  // ACTION
   const handleDateChange = (e) => {
     const newDate = e.target.value;
     console.log("Date changed to:", newDate);
@@ -195,6 +197,7 @@ useEffect(() => {
     setSelectedDate(newDate);
   };
 
+  // ACTION
   const handleLogChange = (event, index) => { // Simply updates the currentLogs state with the new value as it is being typed in for input fields. 
     console.log('Log Change', event.target.placeholder);
     console.log('Input', event.target.value);
@@ -207,27 +210,11 @@ useEffect(() => {
     });
   }
 
+  // ACTION
   const handleRemoveAllLogs = () => {
     console.log('Removing all logs now...')
     return alert('Are you sure you want to delete all logs?');
   }
-
-  // Group logs by date and ensure dates are unique
-  // const groupedLogs = exerciseLogs.reduce((acc, log) => {
-  //   const dateKey = new Date(log.date).toLocaleDateString(); // Format the date
-  //   if (!acc[dateKey]) {
-  //     acc[dateKey] = [];
-  //   }
-  //   acc[dateKey].push(log);
-  //   return acc;
-  // }, {});
-
-  // // Get the unique dates for the selected exercise
-  // const uniqueDates = Object.keys(groupedLogs);
-
-  useEffect(() => {
-    // setCurrentLogs(exerciseLogs[selectedDate])
-  }, [selectedDate])
 
   return (
     <Modal isOpen={logModalIsOpen}>
@@ -248,7 +235,8 @@ useEffect(() => {
         ))}
         </select>
 
-        <form onSubmit={() => handleLogSubmit(selectedExercise.name)}>
+        {/* <form onSubmit={() => handleLogSubmit(selectedExercise.name)}> */}
+        <form onSubmit={handleLogSubmit}>
         {currentLogs.map((log, index) => (
         <div key={index}>
             <label>Set {index + 1}</label>
@@ -269,7 +257,7 @@ useEffect(() => {
         <Button type="button" onClick={handleAddLogRow}>Add Set</Button>
         <Button type="button" onClick={handleRemoveLogRow}>Remove Set</Button>
         <Button type="submit">Save Log</Button>
-        <DeleteButton type="button">Delete All Logs</DeleteButton>
+        <DeleteButton type="button" onClick={handleRemoveAllLogs}>Delete All Logs</DeleteButton>
         <Button type="button" onClick={handleCloseLogModal}>Cancel</Button>
     </form>
     </Modal>
