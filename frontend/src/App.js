@@ -9,6 +9,8 @@ export const AppContext = React.createContext();
 
 const App = () => {
   // DATA / ACTIONS
+  
+    // Time & Date
     const [selectedDate, setSelectedDate] = useState(new Date().toLocaleDateString());
 
     const [timer, setTimer] = useState(0);
@@ -16,15 +18,18 @@ const App = () => {
 
     const [time, setTime] = useState(new Date().toLocaleTimeString());
 
+    // Workout Handling
     const [workoutModalIsOpen, setWorkoutModalIsOpen] = useState(false);
     const [workoutName, setWorkoutName] = useState('');
     const [workouts, setWorkouts] = useState([]);
     const [selectedWorkout, setSelectedWorkout] = useState({title: '', exercises: []});
     const [editWorkout, setEditWorkout] = useState(false);
 
+    // Exercise Handling
     const [exercises, setExercises] = useState([{name: '', sets: '', reps: '', rest: ''}]);
     const [selectedExercise, setSelectedExercise] = useState(null);
 
+    // Workout Logging
     const [logModalIsOpen, setLogModalIsOpen] = useState(false);
     const [exerciseLogs, setExerciseLogs] = useState({});
     const [currentLogs, setCurrentLogs] = useState([]);
@@ -32,6 +37,7 @@ const App = () => {
     const [logDebug, setLogDebug] = useState(true);
     const [datesForCurrentLogs, setDatesForCurrentLogs] = useState([]);
 
+    // Utiltiies 
     const [skipInitialRender, setSkipInitialRender] = useState(false);
 
   // Render the app
