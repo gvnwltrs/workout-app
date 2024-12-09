@@ -4,6 +4,7 @@ source backend/venv/bin/activate
 python3 backend/run.py &
 PID1=$!
 
+export BROWSER=none npm start
 npm --prefix frontend/ start &
 PID2=$!
 

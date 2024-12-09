@@ -199,10 +199,10 @@ setSelectedExercise } = useContext(AppContext);
                 onChange={(e) => handleInput(e, `weight-${index}`)}
                 placeholder="Weight"
                 />
+            <button type="button" onClick={() => handleAddLogRow()}>+</button>
+            <button type="button" onClick={() => handleRemoveLogRow()}>-</button>
             </div>
             ))}
-            <Button type="button" onClick={handleAddLogRow}>Add Set</Button>
-            <Button type="button" onClick={handleRemoveLogRow}>Remove Set</Button>
             <Button type="submit">Save Log</Button>
             <DeleteButton type="button" onClick={handleRemoveAllLogs}>Delete All Logs</DeleteButton>
             <Button type="button" onClick={handleCloseLogModal}>Cancel</Button>

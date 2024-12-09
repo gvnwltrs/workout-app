@@ -10,14 +10,13 @@ export const UI = () => {
     // DATA
     const { selectedWorkout, setSelectedWorkout, setExercises, timerRunning, setTime, timer, setTimer, setTimerRunning, time,
         workouts, exportWorkout, setSelectedExercise, setLogModalIsOpen,
-    exerciseLogs, selectedExercise, setDatesForCurrentLogs, setWorkoutModalIsOpen, setEditWorkout, 
+    exerciseLogs, selectedExercise, exercises, setDatesForCurrentLogs, setWorkoutModalIsOpen, setEditWorkout, 
 setWorkoutName } = useContext(AppContext);
 
     // ACTIONS
     const today = new Date();
     const date = today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
-    // ACTION 
     // Clock
     useEffect(() => {
         const interval = setInterval(() => {
@@ -27,7 +26,6 @@ setWorkoutName } = useContext(AppContext);
     }, []);
 
 
-    // ACTION 
     // Timer logic
     useEffect(() => {
         let interval = null;
@@ -41,42 +39,36 @@ setWorkoutName } = useContext(AppContext);
         return () => clearInterval(interval);
     }, [timerRunning, timer]);
 
-    // ACTION 
      // Timer functions
     const startTimer = (rest) => {
         setTimer(rest);
         setTimerRunning(true);
     }
 
-    // ACTION
     const pauseTimer = () => {
         setTimerRunning(false);
     } 
 
-    // ACTION
     const resetTimer = () => {
         setTimer(0);
         setTimerRunning(false);
     };
 
-    // ACTION
     const resumeTimer = () => {
         setTimerRunning(true);
     }
 
-    // ACTION
     const handleAddWorkout = () => {
         setWorkoutModalIsOpen(true);
         setEditWorkout(false);
         setExercises([{name: '', sets: '', reps: '', rest: ''}]);
     }
 
-    // ACTION
     const handleEditWorkout = async () => {
         setWorkoutModalIsOpen(true);
         setEditWorkout(true);
         setWorkoutName(selectedWorkout.title);
-        
+
         console.log('selectedWorkout: ', selectedWorkout);
         const response = await fetch(`/api/exercises/${selectedWorkout.id}`);
         const data = await response.json();
@@ -84,14 +76,12 @@ setWorkoutName } = useContext(AppContext);
         setExercises(data);
     }
     
-    // ACTION
     const handleOpenLogModal = (exercise) => {
         setSelectedExercise(exercise);
         loadDatesForExercise();
         setLogModalIsOpen(true);
     };
 
-    // ACTION
     const loadDatesForExercise= () => {
         console.log('Selected Exercise to Extract Dates: ', selectedExercise);
         console.log('ExerciseLogs to Extract Dates: ', exerciseLogs);
@@ -115,22 +105,14 @@ setWorkoutName } = useContext(AppContext);
         }
     }
 
-    // ACTION
     const loadWorkout = async (workoutsId) => {
-        const workoutsResponse = await fetch(`/api/workouts/${workoutsId}`); // transmits data incrementally from HTTP server: GET by default
-        const workoutsData = await workoutsResponse.json(); // using another await to make sure we process the whole response
-        setSelectedWorkout(workoutsData);
+        console.log(`load workout data: ${JSON.stringify(workouts)}`);
+        setSelectedWorkout(workouts[workoutsId]);
 
-        const exercisesResponse = await fetch(`/api/exercises/${workoutsId}`);
-        const exercisesData = await exercisesResponse.json();
-        setExercises(exercisesData);
-
-        // const logsResponse = await fetch(`/api/logs/${workoutsId}`);
-        // const logsData = await logsResponse.json();
-        // setExerciseLogs(logsData);
+        console.log(`load exercise data for workouts: ${JSON.stringify(exercises)}`);
+        setExercises(exercises[workoutsId]);
     };
 
-    // ACTION 
     return(
         <div>
         <Header>

@@ -21,7 +21,7 @@ const App = () => {
     // Workout Handling
     const [workoutModalIsOpen, setWorkoutModalIsOpen] = useState(false);
     const [workoutName, setWorkoutName] = useState('');
-    const [workouts, setWorkouts] = useState([]);
+    const [workouts, setWorkouts] = useState([{}]);
     const [selectedWorkout, setSelectedWorkout] = useState({title: '', exercises: []});
     const [editWorkout, setEditWorkout] = useState(false);
 
@@ -51,9 +51,9 @@ const App = () => {
       exerciseLogs, setExerciseLogs, currentLogs, setCurrentLogs, loggedDates, setLoggedDates, logDebug, 
       setLogDebug, datesForCurrentLogs, setDatesForCurrentLogs, skipInitialRender, setSkipInitialRender }
       }>
-      <UI /> 
       <Workout />
       <WorkoutLogs />
+      <UI /> 
     </AppContext.Provider>
     </Container>
   );
