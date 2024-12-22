@@ -56,6 +56,8 @@ export const UI = () => {
         } else if (!timerRunning && timer !== 0) {
         clearInterval(interval);
         }
+        if (timer == 1)
+          alert('Rest Time Complete.');
         return () => clearInterval(interval);
     }, [timerRunning, timer]);
 
