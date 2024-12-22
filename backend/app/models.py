@@ -4,7 +4,9 @@ from . import db
 class Workouts(db.Model):
     id = db.Column(db.Integer, primary_key=True) # creates a unique id for each workout upon each new entry
     title = db.Column(db.String(100), nullable=False)
-    exercises = db.relationship('Exercise', backref='workouts', lazy=True)
+    # exercises = db.relationship('Exercise', backref='workouts', lazy=True)
+    exercises = db.relationship('Exercise', backref='workouts', cascade='all, delete-orphan')
+    workout_log = db.relationship('WorkoutLog', backref='workouts', cascade='all, delete-orphan')
 
     def to_dict(self):
         return {
@@ -37,10 +39,6 @@ class WorkoutLog(db.Model):
     exercise_id = db.Column(db.Integer, db.ForeignKey('exercise.id'), nullable=False)
     date = db.Column(db.Date, nullable=True)
     log = db.Column(db.Text)
-    # sets = db.Column(db.Integer, nullable=False)
-    # reps = db.Column(db.Integer, nullable=False)
-    # weight_lbs = db.Column(db.Float, nullable=False)
-    # notes = db.Column(db.String(500), nullable=True)
 
     def to_dict(self):
         return {
@@ -49,8 +47,4 @@ class WorkoutLog(db.Model):
             'exercise_id': self.exercise_id,
             'date': self.date,
             'log' : self.log
-            # 'sets': self.sets,
-            # 'reps': self.reps,
-            # 'weight_lbs': self.weight_lbs,
-            # 'notes': self.notes,
         }

@@ -15,25 +15,25 @@ export const Exercises = () => {
         setExercises([...exercises, { name: "", sets: "", reps: "", rest: "" }]);
       };
     
-      const removeExercise = async (index) => {
-        const newExercises = [...exercises];
-        const removedExercise = newExercises.splice(index, 1)[0];
-    
-        if (newExercises.length === 0) {
-          newExercises.push({ name: "", sets: "", reps: "", rest: "" });
-        }
-    
-        if (removedExercise.id && selectedWorkout.exercises.find(exercise => exercise.id === removedExercise.id)) {
-          await fetch(`/api/exercises/${removedExercise.id}`, {
-            method: 'DELETE',
-          });
-        
-          setSelectedWorkout(prev => ({
-            ...prev,
-            exercises: prev.exercises.filter(exercise => exercise.id !== removedExercise.id),
-          }));
-        }
-    
-        setExercises(newExercises);
-      };
+    const removeExercise = async (index) => {
+      const newExercises = [...exercises];
+      const removedExercise = newExercises.splice(index, 1)[0];
+  
+      if (newExercises.length === 0) {
+        newExercises.push({ name: "", sets: "", reps: "", rest: "" });
+      }
+  
+      if (removedExercise.id && selectedWorkout.exercises.find(exercise => exercise.id === removedExercise.id)) {
+        await fetch(`/api/exercises/${removedExercise.id}`, {
+          method: 'DELETE',
+        });
+      
+        setSelectedWorkout(prev => ({
+          ...prev,
+          exercises: prev.exercises.filter(exercise => exercise.id !== removedExercise.id),
+        }));
+      }
+  
+      setExercises(newExercises);
+    };
 }

@@ -1,0 +1,30 @@
+version: "3.8"
+services:
+  app-main:
+    container_name: app-main
+    image: app-main:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    profiles:
+      - default
+
+  app-dev:
+    container_name: app-dev
+    image: app-main:dev
+    profiles:
+      - app-dev
+    volumes:
+      - ./src:/app/src
+      - ./tests:/app/tests
+    command: tail -f /dev/null
+
+  app-test:
+    container_name: app-test
+    image: app-main:dev
+    profiles:
+      - app-test
+    volumes:
+      - ./src:/app/src
+      - ./tests:/app/tests
+    command: pytest -v

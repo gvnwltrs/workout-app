@@ -8,14 +8,34 @@ import { AppContext } from '../../App';
 
 export const UI = () => {
     // DATA
-    const { selectedWorkout, setSelectedWorkout, setExercises, timerRunning, setTime, timer, setTimer, setTimerRunning, time,
-        workouts, exportWorkout, setSelectedExercise, setLogModalIsOpen,
-    exerciseLogs, selectedExercise, exercises, setDatesForCurrentLogs, setWorkoutModalIsOpen, setEditWorkout, 
-setWorkoutName } = useContext(AppContext);
+    const { 
+      selectedWorkout, 
+      setSelectedWorkout, 
+      setExercises, 
+      timerRunning, 
+      setTime, 
+      timer, 
+      setTimer, 
+      setTimerRunning, 
+      time,
+      workouts, 
+      exportWorkout, 
+      setSelectedExercise, 
+      setLogModalIsOpen,
+      exerciseLogs, 
+      selectedExercise, 
+      exercises, 
+      setDatesForCurrentLogs, 
+      setWorkoutModalIsOpen, 
+      setEditWorkout, 
+      setWorkoutName,
+      setCurrentLogs
+  } = useContext(AppContext);
 
     // ACTIONS
     const today = new Date();
     const date = today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    const dateMMDDYYY = today.toLocaleDateString('en-US');
 
     // Clock
     useEffect(() => {
@@ -65,6 +85,11 @@ setWorkoutName } = useContext(AppContext);
     }
 
     const handleEditWorkout = async () => {
+        const emptyWorkout = {title: '', exercises: []};
+        if (selectedWorkout.title === emptyWorkout.title) {
+          alert('No workouts to edit yet...');
+          return;
+        }
         setWorkoutModalIsOpen(true);
         setEditWorkout(true);
         setWorkoutName(selectedWorkout.title);
@@ -77,6 +102,18 @@ setWorkoutName } = useContext(AppContext);
     }
     
     const handleOpenLogModal = (exercise) => {
+        console.log('Exercise is: ', exercise);
+        let logToSet = null;
+        exerciseLogs.forEach(log => {
+          if (log['date'] == dateMMDDYYY && log['exercise_id'] == exercise['id']) {
+            logToSet = JSON.parse(log['log']); // have to covert JSON to real type
+          }
+        })
+
+        // Add any additional logic or checks here if necessary
+        if (logToSet != null) {
+          setCurrentLogs(logToSet);
+        }
         setSelectedExercise(exercise);
         loadDatesForExercise();
         setLogModalIsOpen(true);
@@ -98,7 +135,7 @@ setWorkoutName } = useContext(AppContext);
         Object.values(exerciseLogs).forEach(log => {
         dates.add(log.date);
         });
-        console.log('Dates for current logs: ', dates);
+        // console.log('Dates for current logs: ', dates);
         if (dates.size === 0) {
         } else {
         setDatesForCurrentLogs(dates);
@@ -106,11 +143,11 @@ setWorkoutName } = useContext(AppContext);
     }
 
     const loadWorkout = async (workoutsId) => {
-        console.log(`load workout data: ${JSON.stringify(workouts)}`);
-        setSelectedWorkout(workouts[workoutsId]);
-
-        console.log(`load exercise data for workouts: ${JSON.stringify(exercises)}`);
-        setExercises(exercises[workoutsId]);
+        workouts.forEach((workout, index) => {
+            if (workout["id"] == workoutsId) {
+               setSelectedWorkout(workout);
+          }
+        });
     };
 
     return(
@@ -125,10 +162,10 @@ setWorkoutName } = useContext(AppContext);
             {/* as soon as we click on a workout we retrieve the available workouts/exercises from our backend */}
             <AddEditWorkout>
             <select onChange={e => loadWorkout(e.target.value)}> 
-            <option>Select a workout</option>
-            {workouts.map((workouts, index) => (
-                <option key={index} value={workouts.id}>{workouts.title}</option>
-            ))}
+              <option>Select a workout</option>
+              {workouts.map((workouts, index) => (
+                  <option key={index} value={workouts.id}>{workouts.title}</option>
+              ))}
             </select>
             <Button onClick={handleAddWorkout}>Add Workout</Button>
             <Button onClick={handleEditWorkout}>Edit Workout</Button>

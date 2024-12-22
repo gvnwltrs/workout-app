@@ -35,21 +35,59 @@ const App = () => {
     const [currentLogs, setCurrentLogs] = useState([]);
     const [loggedDates, setLoggedDates] = useState([]);
     const [logDebug, setLogDebug] = useState(true);
+    const [logInit, setLogInit] = useState(false);
     const [datesForCurrentLogs, setDatesForCurrentLogs] = useState([]);
 
     // Utiltiies 
     const [skipInitialRender, setSkipInitialRender] = useState(false);
+    const [content, setContent] = useState(null);
 
   // Render the app
   return (
     <Container>
     <AppContext.Provider value={
-      { selectedDate, setSelectedDate, timer, setTimer, timerRunning, setTimerRunning, 
-      time, setTime, workoutModalIsOpen, setWorkoutModalIsOpen, workoutName, setWorkoutName, 
-      workouts, setWorkouts, selectedWorkout, setSelectedWorkout, editWorkout, setEditWorkout, 
-      exercises, setExercises, selectedExercise, setSelectedExercise, logModalIsOpen, setLogModalIsOpen, 
-      exerciseLogs, setExerciseLogs, currentLogs, setCurrentLogs, loggedDates, setLoggedDates, logDebug, 
-      setLogDebug, datesForCurrentLogs, setDatesForCurrentLogs, skipInitialRender, setSkipInitialRender }
+      { 
+          selectedDate, 
+          setSelectedDate, 
+          timer, 
+          setTimer, 
+          timerRunning, 
+          setTimerRunning, 
+          time, 
+          setTime, 
+          workoutModalIsOpen, 
+          setWorkoutModalIsOpen, 
+          workoutName, 
+          setWorkoutName, 
+          workouts, 
+          setWorkouts, 
+          selectedWorkout, 
+          setSelectedWorkout, 
+          editWorkout, 
+          setEditWorkout, 
+          exercises, 
+          setExercises, 
+          selectedExercise, 
+          setSelectedExercise, 
+          logModalIsOpen, 
+          setLogModalIsOpen, 
+          logInit,
+          setLogInit,
+          exerciseLogs, 
+          setExerciseLogs, 
+          currentLogs, 
+          setCurrentLogs, 
+          loggedDates, 
+          setLoggedDates, 
+          logDebug, 
+          setLogDebug, 
+          datesForCurrentLogs, 
+          setDatesForCurrentLogs, 
+          skipInitialRender, 
+          setSkipInitialRender,
+          content,
+          setContent
+        }
       }>
       <Workout />
       <WorkoutLogs />

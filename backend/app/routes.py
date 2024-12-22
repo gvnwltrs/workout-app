@@ -1,5 +1,6 @@
 import pandas as pd
 from flask import Blueprint, jsonify, request, send_file, Response
+import json
 from io import StringIO, BytesIO
 from .models import db, Workouts, Exercise, WorkoutLog
 from urllib.parse import unquote
@@ -57,19 +58,35 @@ def add_log(data):
     formatted_logs = json.dumps(logs)
     print(f"workout_id: {workout_id}, exercise_id: {exercise_id}, logs: {formatted_logs}")
 
-    workout_log = WorkoutLog(workouts_id=workout_id, exercise_id=exercise_id, date=date)
     print("Adding log...")
-    #print(f"Current workout logs: {logs_dict}")
-    for idx, log in enumerate(data['log']):
-        print(f"Logging: workout_id[{workout_id}] | exercise_id[{exercise_id}] on date -> {date}: {log}")
-        workout_log = WorkoutLog(workouts_id=workout_id, exercise_id=exercise_id, date=date, log=formatted_logs)
-        db.session.add(workout_log)
-    # db.session.commit()
+    print(f"Logging: workout_id[{workout_id}] | exercise_id[{exercise_id}] on date -> {date}: {logs}")
+
+    workout_log = WorkoutLog(workouts_id=workout_id, exercise_id=exercise_id, date=date, log=formatted_logs)
+    db.session.add(workout_log)
+    db.session.commit()
+
     return jsonify({'message': 'workout exercise entry logged for sets and reps'}), 200 
 
-# TODO: implement -- tie to remove button (-)
-def delete_all_logs(data):
-    print("Removing existing log...")
+# TODO: implement
+def delete_logs(workout_id, exercise_id, cur_date):
+    print("Removing existing logs...")
+    print('Date is: ', cur_date)
+    workout_logs_to_delete = WorkoutLog.query.filter_by(workouts_id=workout_id, exercise_id=exercise_id, date=cur_date).all()
+
+    print('workouts to delete is: ', workout_logs_to_delete)
+    if workout_logs_to_delete == []:
+        return jsonify({'message': 'Nothing to delete.'}), 404 
+
+    for log in workout_logs_to_delete:
+        db.session.delete(log)
+    db.session.commit()
+    return jsonify({'message': 'workout exercise entry logged for sets and reps'}), 200 
+
+def delete_all_logs(workout_id, exercise_id):
+    print("Removing existing logs...")
+    workout_logs_to_delete = WorkoutLog.query.filter_by(workout_id=workout_id, exercise_id=exercise_id).all()
+    db.session.delete(workout_logs_to_delete)
+    db.session.commit()
     return jsonify({'message': 'workout exercise entry logged for sets and reps'}), 200 
 
 @main.route('/api/workouts', methods=['GET']) # used when initially loading the page
@@ -147,6 +164,7 @@ def add_exercises(workouts_id):
 def update_exercises(id):
     data = request.get_json()
 
+    exercise = Exercise.query.get_or_404(id)
     # TODO: Extract Start: update_database()
     exercise.sets = data['sets'] # get the description from the request data and update the exercise
     exercise.reps = data['reps'] # get the description from the request data and update the exercise
@@ -182,27 +200,30 @@ def get_workout_logs():
     return jsonify(logs_dict), 200
     # return jsonify([log.to_dict() for log in logs]), 200
 
-@main.route('/api/workoutlogs/handler', methods=['POST'])
-def update_workout_logs():
+@main.route('/api/workoutlogs/add', methods=['POST'])
+def add_workout_logs():
     data = request.get_json()
     print(data)
+    add_log(data)
 
     return jsonify({'message': 'workout exercise entry logged for sets and reps'}), 200
 
-@main.route('/api/workouts/<int:workout_id>/exercises/<int:exercise_id>/logs', methods=['DELETE'])
+# FIXME: have to fix date identifier handling
+@main.route('/api/workoutlogs/remove/<int:workout_id>/<int:exercise_id>', methods=['DELETE'])
 def delete_workout_logs(workout_id, exercise_id):
-    # Get the workout and exercise with the specified ids or return a 404 error
-    workout = Workouts.query.get_or_404(workout_id)
-    exercise = Exercise.query.get_or_404(exercise_id)
+    data = request.get_json()
+    formatted_date = format_date_for_table(data['date'])
+    print('Date is: ', formatted_date)
+    result, status = delete_logs(workout_id, exercise_id, formatted_date)
+    print('Status for delete is: ', status)
+    if status == 404:
+        print('Returning: ', result)
+        return result, 404
+    return jsonify({'message': 'Logs deleted successfully'})
 
-    # Get the logs for the specified workout and exercise
-    logs = WorkoutLog.query.filter_by(workouts_id=workout_id, exercise_id=exercise_id).all()
-
-    # Delete the logs
-    for log in logs:
-        db.session.delete(log)
-    db.session.commit()
-
+@main.route('/api/workoutlogs/remove_all/<int:workout_id>/<int:exercise_id>', methods=['DELETE'])
+def delete_all_workout_logs(workout_id):
+    delete_all_logs(workout_id, exercise_id)
     # Return a success message
     return jsonify({'message': 'Logs deleted successfully'})
 
