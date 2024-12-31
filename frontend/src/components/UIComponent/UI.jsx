@@ -171,7 +171,8 @@ export const UI = () => {
             </select>
             <Button onClick={handleAddWorkout}>Add Workout</Button>
             <Button onClick={handleEditWorkout}>Edit Workout</Button>
-            <Button onClick={exportWorkout}>Export Workout</Button>
+            {/*TODO: Disabled for now. Implement next iteration.*/}
+            {/* <Button onClick={exportWorkout}>Export Workout</Button> */}
             </AddEditWorkout>
             {selectedWorkout ? (
             <>
